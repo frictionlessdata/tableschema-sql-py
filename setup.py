@@ -33,11 +33,11 @@ setup(
     test_suite='nose.collector',
     install_requires=[
         'sqlalchemy >= 1.0',
+        'typecast >= 0.2.2',
         'normality'
     ],
     tests_require=[
         'nose',
-        'typecast',
         'coverage',
         'wheel',
         'unicodecsv',

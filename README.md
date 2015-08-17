@@ -1,4 +1,4 @@
-# jts-sql [![Build Status](https://travis-ci.org/pudo/jts-sql.svg?branch=master)](https://travis-ci.org/pudo/jts-sql)
+# jts-sql [![Build Status](https://travis-ci.org/okfn/jts-sql.svg?branch=master)](https://travis-ci.org/okfn/jts-sql)
 
 Generate database tables using SQLAlchemy, based on JSON Table Schema field
 descriptors. You can also load data into a tables based on an iterator.

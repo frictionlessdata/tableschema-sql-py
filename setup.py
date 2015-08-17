@@ -37,8 +37,10 @@ setup(
     ],
     tests_require=[
         'nose',
+        'typecast',
         'coverage',
         'wheel',
-        'unicodecsv'
+        'unicodecsv',
+        'jtskit'
     ]
 )

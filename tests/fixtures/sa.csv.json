@@ -1,0 +1,95 @@
+{
+  "fields": [
+    {
+      "title": "",
+      "type": "string",
+      "format": "default",
+      "description": "",
+      "name": "id"
+    },
+    {
+      "title": "",
+      "type": "string",
+      "format": "default",
+      "description": "",
+      "name": "name"
+    },
+    {
+      "title": "",
+      "type": "string",
+      "format": "default",
+      "description": "",
+      "name": "email"
+    },
+    {
+      "title": "",
+      "type": "any",
+      "format": "default",
+      "description": "",
+      "name": "twitter"
+    },
+    {
+      "title": "",
+      "type": "string",
+      "format": "default",
+      "description": "",
+      "name": "group"
+    },
+    {
+      "title": "",
+      "type": "string",
+      "format": "default",
+      "description": "",
+      "name": "group_id"
+    },
+    {
+      "title": "",
+      "type": "string",
+      "format": "default",
+      "description": "",
+      "name": "area"
+    },
+    {
+      "title": "",
+      "type": "string",
+      "format": "default",
+      "description": "",
+      "name": "chamber"
+    },
+    {
+      "title": "",
+      "type": "integer",
+      "format": "default",
+      "description": "",
+      "name": "term"
+    },
+    {
+      "title": "",
+      "type": "any",
+      "format": "default",
+      "description": "",
+      "name": "start_date"
+    },
+    {
+      "title": "",
+      "type": "any",
+      "format": "default",
+      "description": "",
+      "name": "end_date"
+    },
+    {
+      "title": "",
+      "type": "string",
+      "format": "default",
+      "description": "",
+      "name": "image"
+    },
+    {
+      "title": "",
+      "type": "any",
+      "format": "default",
+      "description": "",
+      "name": "gender"
+    }
+  ]
+}

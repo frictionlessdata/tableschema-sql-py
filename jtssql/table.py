@@ -4,20 +4,17 @@ from sqlalchemy import MetaData
 from sqlalchemy.schema import Table, Column
 from sqlalchemy.types import Unicode
 
-# from spendb.core import db
-# from spendb.model.common import json_default
-# from spendb.validation.model import TYPES
+from jtssql.util import JTS_TYPES, json_default
 
 
 class SchemaTable(object):
-    """ The ``FactTable`` serves as a controller object for
-    a given ``Model``, handling the creation, filling and migration
-    of the table schema associated with the dataset. """
+    """ A SchemaTable uses the given JSON Table Schema to reflect, and, if
+    necessary, generate a database table within the specified database. """
 
-    def __init__(self, dataset):
-        self.dataset = dataset
-        self.bind = db.engine
-        self.table_name = '%s__facts' % dataset.name
+    def __init__(self, engine, table_name, schema):
+        self.bind = engine
+        self.table_name = table_name
+        self.schema = schema
         self.meta = MetaData()
         self.meta.bind = self.bind
         self._table = None
@@ -36,31 +33,14 @@ class SchemaTable(object):
         return self._table
 
     @property
-    def alias(self):
-        """ An alias used for queries. """
-        if not hasattr(self, '_alias'):
-            self._alias = self.table.alias('entry')
-        return self._alias
-
-    @property
-    def mapping(self):
-        if not hasattr(self, '_mapping'):
-            self._mapping = {}
-            for attribute in self.dataset.model.attributes:
-                if attribute.column in self.alias.columns:
-                    col = self.alias.c[attribute.column]
-                    self._mapping[attribute.path] = col
-        return self._mapping
-
-    @property
     def exists(self):
-        return db.engine.has_table(self.table.name)
+        return self.bind.has_table(self.table.name)
 
     def _fields_columns(self, table):
         """ Transform the (auto-detected) fields into a set of column
         specifications. """
-        for field in self.dataset.fields:
-            data_type = TYPES.get(field.get('type'), Unicode)
+        for field in self.schema.get('fields'):
+            data_type = JTS_TYPES.get(field.get('type'), Unicode)
             col = Column(field.get('name'), data_type, nullable=True)
             table.append_column(col)
 
@@ -90,15 +70,15 @@ class SchemaTable(object):
             raise
 
     def create(self):
-        """ Create the fact table if it does not exist. """
+        """ Create the table if it does not exist. """
         if not self.exists:
             self.table.create(self.bind)
 
     def drop(self):
-        """ Drop the fact table if it does exist. """
+        """ Drop the table if it does exist. """
         if self.exists:
             self.table.drop()
         self._table = None
 
     def __repr__(self):
-        return "<FactTable(%r)>" % (self.dataset)
+        return "<SchemaTable(%r)>" % (self.table_name)

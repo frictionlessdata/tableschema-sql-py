@@ -8,7 +8,7 @@ before_install:
 install:
     - pip install --upgrade pip
     - pip install -e .
-    - pip install nose coverage unicodecsv
+    - pip install nose coverage unicodecsv jtskit typecast
 before_script:
     - nosetests --version
 script:

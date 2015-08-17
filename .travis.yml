@@ -1,0 +1,17 @@
+language: python
+python:
+    - "2.7"
+    - "3.3"
+before_install:
+    - virtualenv ./pyenv --distribute
+    - source ./pyenv/bin/activate
+install:
+    - pip install --upgrade pip
+    - pip install -e .
+    - pip install nose coverage unicodecsv
+before_script:
+    - nosetests --version
+script:
+    - nosetests --with-coverage --cover-package=jtssql
+after_success:
+    - coveralls

@@ -1,9 +1,6 @@
 from setuptools import setup, find_packages
 
-try:
-    from jtssql import __version__
-except:
-    __version__ = 'dev'
+__version__ = '0.1.1'
 
 setup(
     name='jtssql',

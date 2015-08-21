@@ -11,13 +11,26 @@ Here's an example of using ``jts-sql``:
 from sqlalchemy import create_engine
 from jtssql import SchemaTable
 
-data = [{'foo': 3, 'bar': 'hello'},
-        {'foo': 5, 'bar': 'bye'}]
+# your rows of data - maybe you loaded these from a CSV :-)
+# e.g. data = [ row for row in csv.DictReader(open('mycsv.csv')) ]
+data = [
+    {'foo': 3, 'bar': 'hello'},
+    {'foo': 5, 'bar': 'bye'}
+]
 
-schema = {'fields': [
-    {'name': 'foo', 'type': 'integer'},
-    {'name': 'bar', 'type': 'string'}
-]}
+# this is your JSON Table Schema - http://dataprotocols.org/json-table-schema/
+schema = {
+    'fields': [
+        {
+            'name': 'foo',
+            'type': 'integer'
+        },
+        {
+            'name': 'bar',
+            'type': 'string'
+        }
+    ]
+}
 
 engine = create_engine('sqlite://example.db')
 table = SchemaTable(engine, 'foo_table', schema)

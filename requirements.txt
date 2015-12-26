@@ -1,0 +1,4 @@
+six
+jsontableschema
+google-api-python-client
+git+git://github.com/okfn/tabulator-py.git

@@ -1,43 +1,46 @@
+# -*- coding: utf-8 -*-
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import os
+import io
+import json
 from setuptools import setup, find_packages
 
-__version__ = '0.1.1'
 
+# Helpers
+def read(path):
+    basedir = os.path.dirname(__file__)
+    return io.open(os.path.join(basedir, path), encoding='utf-8').read()
+
+
+# Prepare
+readme = read('README.md')
+license = read('LICENSE.txt')
+requirements = read('requirements.txt').split()
+requirements_dev = read('requirements.dev.txt').split()
+package = json.loads(read('package.json'))
+
+
+# Run
 setup(
-    name='jtssql',
-    version=__version__,
-    description="Generate database tables based on JSON Table Schema",
-    long_description="",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4'
-    ],
-    keywords='schema jsontableschema jts sql data',
-    author='Friedrich Lindenberg',
-    author_email='friedrich@pudo.org',
-    url='http://github.com/okfn/jtssql',
-    license='MIT',
-    packages=find_packages(exclude=['ez_setup', 'examples', 'test']),
-    namespace_packages=[],
-    package_data={},
+    name=package['name'],
+    version=package['version'],
+    description=package['description'],
+    long_description=readme,
+    author=package['author'],
+    author_email=package['author_email'],
+    url=package['repository'],
+    license=package['license'],
     include_package_data=True,
-    zip_safe=False,
+    packages=find_packages(exclude=['examples', 'tests']),
+    package_dir={package['slug']: package['slug']},
+    install_requires=requirements,
+    tests_require=requirements_dev,
     test_suite='nose.collector',
-    install_requires=[
-        'sqlalchemy >= 1.0',
-        'typecast >= 0.2.2',
-        'normality'
-    ],
-    tests_require=[
-        'nose',
-        'coverage',
-        'wheel',
-        'unicodecsv',
-        'jtskit'
-    ]
+    zip_safe=False,
+    keywords=package['keywords'],
+    classifiers=package['classifiers'],
 )

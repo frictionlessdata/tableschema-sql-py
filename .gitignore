@@ -34,7 +34,6 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
-pyenv/
 htmlcov/
 .tox/
 .coverage
@@ -56,3 +55,15 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Virtualenv
+venv/
+venv2/
+venv3/
+
+# Tmux
+.tmuxp.yml
+
+# Project
+.credentials.json
+tmp/

@@ -1,0 +1,20 @@
+{
+    "fields": [
+        {
+            "name": "id",
+            "type": "string"
+        },
+        {
+            "name": "name",
+            "type": "string"
+        },
+        {
+            "name": "current",
+            "type": "boolean"
+        },
+        {
+            "name": "amount",
+            "type": "number"
+        }
+    ]
+}

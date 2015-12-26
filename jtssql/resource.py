@@ -164,11 +164,9 @@ class Resource(object):
 
         # Get data
         data = []
-        with topen(path, **options) as table:
-            # TODO: add header row config?
-            table.add_processor(processors.Headers())
+        with topen(path, with_headers=True, **options) as table:
             table.add_processor(processors.Schema(self.schema))
-            for row in table.readrow():
+            for row in table:
                 data.append(row)
 
         # Add data to table

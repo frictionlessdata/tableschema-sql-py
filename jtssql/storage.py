@@ -7,7 +7,8 @@ from __future__ import unicode_literals
 import io
 import csv
 import time
-from sqlalchemy import Table, Column, MetaData, Text, TEXT, Integer, Float, Boolean
+from sqlalchemy import (Table, Column, MetaData,
+        Text, TEXT, Integer, INTEGER, Float, FLOAT, Boolean, BOOLEAN)
 from sqlalchemy.sql import select
 from sqlalchemy.schema import CreateSchema
 from sqlalchemy.exc import OperationalError
@@ -59,12 +60,9 @@ class Storage(object):
 
         """
 
-        # Add prefix
-        table = self.__prefix + table
-
         # Check not existent
         if self.check(table):
-            message = 'Table "%s" is already existent.' % self
+            message = 'Table "%s" is already existent.' % table
             raise RuntimeError(message)
 
         # Convert jts schema
@@ -76,8 +74,9 @@ class Storage(object):
 
         # Create table
         metadata = MetaData()
-        table = Table(table, metadata, *columns, schema=self.__dbschema)
-        table.create(self.__engine)
+        name = self.__prefix + table
+        dbtable = Table(name, metadata, *columns, schema=self.__dbschema)
+        dbtable.create(self.__engine)
 
         # Remove tables cache
         self.__tables_cache = None
@@ -215,9 +214,9 @@ class Storage(object):
         # Mapping
         mapping = {
             TEXT: 'string',
-            Integer: 'integer',
-            Float: 'number',
-            Boolean: 'boolean',
+            INTEGER: 'integer',
+            FLOAT: 'number',
+            BOOLEAN: 'boolean',
         }
 
         # Convert

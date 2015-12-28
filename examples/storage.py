@@ -11,14 +11,14 @@ import json
 from sqlalchemy import create_engine
 
 sys.path.insert(0, '.')
-from jtssql import Storage
+import jtssql
 
 
-def run(table='test', prefix='test_'):
+def run(prefix='test_', table='test'):
 
     # Storage
     engine = create_engine('sqlite:///:memory:')
-    storage = Storage(engine=engine, prefix=prefix)
+    storage = jtssql.Storage(engine=engine, prefix=prefix)
 
     # Delete
     print('[Delete]')

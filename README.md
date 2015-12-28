@@ -25,7 +25,7 @@ storage = jtssql.Storage(<engine>)
 jtssql.import_resource(storage, 'table', 'schema.json', 'data.csv')
 ```
 
-As well as we can export sql database:
+Also we can export it from sql database:
 
 ```python
 import jtssql

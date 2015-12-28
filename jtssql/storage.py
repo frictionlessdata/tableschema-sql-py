@@ -101,9 +101,7 @@ class Storage(object):
 
         # Drop table
         metadata = MetaData()
-        table = Table(self.__name, metadata,
-                autoload=True, autoload_with=self.__engine,
-                schema=self.__dbschema)
+        table = Table(self.__name, metadata, schema=self.__dbschema)
         table.drop(self.__engine)
 
         # Remove tables cache

@@ -3,106 +3,82 @@
 [![Travis](https://img.shields.io/travis/okfn/jsontableschema-bigquery-py.svg)](https://travis-ci.org/okfn/jsontableschema-bigquery-py)
 [![Coveralls](http://img.shields.io/coveralls/okfn/jsontableschema-bigquery-py.svg?branch=master)](https://coveralls.io/r/okfn/jsontableschema-bigquery-py?branch=master)
 
-Generate and load BigQuery tables based on JSON Table Schema descriptors.
+Generate and load SQL tables based on JSON Table Schema descriptors.
 
 ## Usage
 
 This section is intended to be used by end-users of the library.
 
-### Resource and Table
+### Import/Export
 
-> See section below how to get authentificated service.
+> See section below how to get SQL engine.
 
-Resource represents Big Query table wrapped in JSON Table Schema
-converters and validators:
+High-level API is easy to use.
+
+Having `schema.json` (JSONTableSchema) and `data.csv` in
+current directory we can import it to sql database:
 
 ```python
-from jtsbq import Resource
+import jtssql
 
-resource = Resource(<service>, 'project_id', 'dataset_id', 'table_id')
-
-resource.create(schema)
-resource.schema
-
-resource.add_data(data)
-resource.get_data()
-
-resource.import_data(path)
-resource.export_schema(path)
-resource.export_data(path)
+storage = jtssql.Storage(<engine>)
+jtssql.import_resource(storage, 'table', 'schema.json', 'data.csv')
 ```
 
-Table represents native Big Query table:
+As well as we can export sql database:
 
 ```python
-from jtsbq import Table
+import jtssql
 
-table = Table(<service>, 'project_id', 'dataset_id', 'table_id')
-
-table.create(schema)
-table.schema
-
-table.add_data(data)
-table.get_data()
+storage = jtssql.Storage(<engine>)
+jtssql.export_resource(storage, 'table', 'schema.json', 'data.csv')
 ```
 
-### Authentificated service
+### SQL Engine
 
-To start using Google BigQuery service:
-- Create a new project - [link](https://console.developers.google.com/home/dashboard)
-- Create a service key - [link](https://console.developers.google.com/apis/credentials)
-- Download json credentials and set `GOOGLE_APPLICATION_CREDENTIALS` environment variable
-
-For example:
+SQLAlchemy is used as sql wrapper. We can get engine this way:
 
 ```python
-import os
-from apiclient.discovery import build
-from oauth2client.client import GoogleCredentials
+from sqlalchemy import create_engine
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '.credentials.json'
-credentials = GoogleCredentials.get_application_default()
-service = build('bigquery', 'v2', credentials=credentials)
+engine = create_engine('sqlite:///:memory:')
 ```
 
 ### Design Overview
 
-#### Entities
 
-- Table
+#### Storage
 
-    Table is a native BigQuery table. Schema and data are used as it is in BigQuery.
-    For example to create a Table user has to pass a BigQuery compatible schema.
+On level between the high-level interface and SQL wrapper
+package uses Tabular Storage concept:
 
-- Resource
-
-    Resource is a Table wrapperd in JSONTableSchema converters and validators.
-    That means user interacts with Resource in JSONTableSchema terms. For example
-    to create an underlaying Table user has to pass JSONTableSchema compatible schema.
-    All data are returned after JSONTableSchema conversion.
-
-> Resource is a JSONTableSchema facade to Table (BigQuery) backend.
-
-Table and Resource are geteways by their nature. It means user can initiate
-Table without real BigQuery table creation then call `create` or `delete` to
-delete the real table without instance destruction.
+```
+Storage
+    + init (**options)
+    + check (table)
+    + create (table, schema)
+    + delete (table)
+    + describe (table)
+    + read (table)
+    + write (table, data)
+```
 
 #### Mappings
 
 ```
-schema.json -> BigQuery table schema
-data.csv -> BigQuery talbe data
+schema.json -> SQL table schema
+data.csv -> SQL talbe data
 ```
 
 #### Drivers
 
-Default Google BigQuery client is used - [docs](https://developers.google.com/resources/api-libraries/documentation/bigquery/v2/python/latest/).
+SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
 
 ### Documentation
 
 API documentation is presented as docstings:
-- [Resource](https://github.com/okfn/jsontableschema-bigquery-py/blob/master/jtsbq/resource.py)
-- [Table](https://github.com/okfn/jsontableschema-bigquery-py/blob/master/jtsbq/table.py)
+- [import/export](https://github.com/okfn/jsontableschema-sql-py/blob/master/jtssql/resource.py)
+- [Storage](https://github.com/okfn/jsontableschema-sql-py/blob/master/jtssql/table.py)
 
 ## Development
 

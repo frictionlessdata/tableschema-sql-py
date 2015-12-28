@@ -12,8 +12,7 @@ import json
 from tabulator import topen, processors
 from jsontableschema.model import SchemaModel
 
-from . import schema as schema_module
-from .table import Table
+from .databox import Databox
 
 
 # Module API

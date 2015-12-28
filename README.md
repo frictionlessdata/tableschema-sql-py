@@ -78,7 +78,7 @@ SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
 
 API documentation is presented as docstings:
 - [import/export](https://github.com/okfn/jsontableschema-sql-py/blob/master/jtssql/resource.py)
-- [Storage](https://github.com/okfn/jsontableschema-sql-py/blob/master/jtssql/table.py)
+- [Storage](https://github.com/okfn/jsontableschema-sql-py/blob/master/jtssql/storage.py)
 
 ## Development
 

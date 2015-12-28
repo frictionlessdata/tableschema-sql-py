@@ -4,14 +4,11 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import io
-import csv
-import time
-from sqlalchemy import (Table, Column, MetaData,
+from sqlalchemy import (
+        Table, Column, MetaData,
         Text, TEXT, Integer, INTEGER, Float, FLOAT, Boolean, BOOLEAN)
 from sqlalchemy.sql import select
 from sqlalchemy.schema import CreateSchema
-from sqlalchemy.exc import OperationalError
 from jsontableschema.model import SchemaModel
 
 
@@ -35,7 +32,7 @@ class Storage(object):
         template = 'Storage <{engine}/{dbschema}>'
         text = template.format(
                 engine=self.__engine,
-                dbschema=dbschema)
+                dbschema=self.__dbschema)
 
         return text
 
@@ -73,9 +70,8 @@ class Storage(object):
             self.__engine.execute(CreateSchema(self.__dbschema))
 
         # Create table
-        metadata = MetaData()
         name = self.__prefix + table
-        dbtable = Table(name, metadata, *columns, schema=self.__dbschema)
+        dbtable = Table(name, MetaData(), *columns, schema=self.__dbschema)
         dbtable.create(self.__engine)
 
         # Remove tables cache
@@ -91,18 +87,15 @@ class Storage(object):
 
         """
 
-        # Add prefix
-        table = self.__prefix + table
-
         # Check existent
-        if self.check(table):
+        if not self.check(table):
             message = 'Table "%s" is not existent.' % self
             raise RuntimeError(message)
 
         # Drop table
-        metadata = MetaData()
-        table = Table(self.__name, metadata, schema=self.__dbschema)
-        table.drop(self.__engine)
+        name = self.__prefix + table
+        dbtable = Table(name, MetaData(), schema=self.__dbschema)
+        dbtable.drop(self.__engine)
 
         # Remove tables cache
         self.__tables_cache = None
@@ -112,13 +105,13 @@ class Storage(object):
         # Add prefix
         table = self.__prefix + table
 
-        metadata = MetaData()
-        table = Table(table, metadata,
+        dbtable = Table(
+                table, MetaData(),
                 autoload=True, autoload_with=self.__engine,
                 schema=self.__dbschema)
 
         # Get schema
-        schema = self.__restore_schema(table)
+        schema = self.__restore_schema(dbtable)
 
         return schema
 
@@ -127,8 +120,8 @@ class Storage(object):
         # Add prefix
         table = self.__prefix + table
 
-        metadata = MetaData()
-        table = Table(table, metadata,
+        table = Table(
+                table, MetaData(),
                 autoload=True, autoload_with=self.__engine,
                 schema=self.__dbschema)
 
@@ -152,8 +145,8 @@ class Storage(object):
         # Add prefix
         table = self.__prefix + table
 
-        metadata = MetaData()
-        table = Table(table, metadata,
+        table = Table(
+                table, MetaData(),
                 autoload=True, autoload_with=self.__engine,
                 schema=self.__dbschema)
 
@@ -205,7 +198,7 @@ class Storage(object):
 
         return columns
 
-    def __restore_schema(self, table):
+    def __restore_schema(self, dbtable):
         """Convert SQLAlchemy table reflection to JSONTableSchema schema.
         """
 
@@ -219,7 +212,7 @@ class Storage(object):
 
         # Convert
         fields = []
-        for column in table.columns:
+        for column in dbtable.columns:
             try:
                 field_type = mapping[column.type.__class__]
             except KeyError:

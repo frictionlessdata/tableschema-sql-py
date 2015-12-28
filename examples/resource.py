@@ -40,6 +40,8 @@ def run(import_schema_path='examples/data/spending/schema.json',
             data_path=export_data_path)
     print('exported')
 
+    return locals()
+
 
 if __name__ == '__main__':
     run()

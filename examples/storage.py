@@ -22,21 +22,21 @@ def run(table='test', prefix='test_'):
 
     # Delete
     print('[Delete]')
-    print(storage.check_table(table))
-    if storage.check_table(table):
-        storage.delete_table(table)
+    print(storage.check(table))
+    if storage.check(table):
+        storage.delete(table)
 
     # Create
     print('[Create]')
-    print(storage.check_table(table))
-    storage.create_table(table, {'fields': [{'name': 'id', 'type': 'string'}]})
-    print(storage.check_table(table))
-    print(storage.describe_table(table))
+    print(storage.check(table))
+    storage.create(table, {'fields': [{'name': 'id', 'type': 'string'}]})
+    print(storage.check(table))
+    print(storage.describe(table))
 
     # Add data
     print('[Add data]')
-    storage.write_table(table, [('id1',), ('id2',)])
-    print(list(storage.read_table(table)))
+    storage.write(table, [('id1',), ('id2',)])
+    print(list(storage.read(table)))
 
     # Iterator
     print('[List]')

@@ -31,9 +31,8 @@ class Storage(object):
     def __repr__(self):
 
         # Template and format
-        template = 'Storage <{name} on {engine}/{dbschema}>'
+        template = 'Storage <{engine}/{dbschema}>'
         text = template.format(
-                name = self.__name,
                 engine=self.__engine,
                 dbschema=dbschema)
 
@@ -42,10 +41,10 @@ class Storage(object):
     def __iter__(self):
         return iter(self.__tables)
 
-    def check_table(self, name):
-        return name in self.__tables
+    def check(self, table):
+        return table in self.__tables
 
-    def create_table(self, name, schema):
+    def create(self, table, schema):
         """Create table by schema.
 
         Parameters
@@ -61,10 +60,10 @@ class Storage(object):
         """
 
         # Add prefix
-        name = self.__prefix + name
+        table = self.__prefix + table
 
         # Check not existent
-        if self.check_table(name):
+        if self.check(table):
             message = 'Table "%s" is already existent.' % self
             raise RuntimeError(message)
 
@@ -77,13 +76,13 @@ class Storage(object):
 
         # Create table
         metadata = MetaData()
-        table = Table(name, metadata, *columns, schema=self.__dbschema)
+        table = Table(table, metadata, *columns, schema=self.__dbschema)
         table.create(self.__engine)
 
         # Remove tables cache
         self.__tables_cache = None
 
-    def delete_table(self, name):
+    def delete(self, table):
         """Delete table.
 
         Raises
@@ -94,10 +93,10 @@ class Storage(object):
         """
 
         # Add prefix
-        name = self.__prefix + name
+        table = self.__prefix + table
 
         # Check existent
-        if self.check_table(name):
+        if self.check(table):
             message = 'Table "%s" is not existent.' % self
             raise RuntimeError(message)
 
@@ -111,13 +110,13 @@ class Storage(object):
         # Remove tables cache
         self.__tables_cache = None
 
-    def describe_table(self, name):
+    def describe(self, table):
 
         # Add prefix
-        name = self.__prefix + name
+        table = self.__prefix + table
 
         metadata = MetaData()
-        table = Table(name, metadata,
+        table = Table(table, metadata,
                 autoload=True, autoload_with=self.__engine,
                 schema=self.__dbschema)
 
@@ -126,13 +125,13 @@ class Storage(object):
 
         return schema
 
-    def read_table(self, name):
+    def read(self, table):
 
         # Add prefix
-        name = self.__prefix + name
+        table = self.__prefix + table
 
         metadata = MetaData()
-        table = Table(name, metadata,
+        table = Table(table, metadata,
                 autoload=True, autoload_with=self.__engine,
                 schema=self.__dbschema)
 
@@ -141,10 +140,10 @@ class Storage(object):
 
         return list(result)
 
-    def write_table(self, name, data):
+    def write(self, table, data):
 
         # Get model and data
-        model = SchemaModel(self.describe_table(name))
+        model = SchemaModel(self.describe(table))
         cdata = []
         for row in data:
             rdata = {}
@@ -154,10 +153,10 @@ class Storage(object):
             cdata.append(rdata)
 
         # Add prefix
-        name = self.__prefix + name
+        table = self.__prefix + table
 
         metadata = MetaData()
-        table = Table(name, metadata,
+        table = Table(table, metadata,
                 autoload=True, autoload_with=self.__engine,
                 schema=self.__dbschema)
 
@@ -173,14 +172,14 @@ class Storage(object):
         if self.__tables_cache is None:
 
             # Collect
-            names = []
-            for name in self.__engine.table_names(schema=self.__dbschema):
-                if name.startswith(self.__prefix):
-                    name = name.replace(self.__prefix, '', 1)
-                    names.append(name)
+            tables = []
+            for table in self.__engine.table_names(schema=self.__dbschema):
+                if table.startswith(self.__prefix):
+                    table = table.replace(self.__prefix, '', 1)
+                    tables.append(table)
 
             # Save
-            self.__tables_cache = names
+            self.__tables_cache = tables
 
         return self.__tables_cache
 

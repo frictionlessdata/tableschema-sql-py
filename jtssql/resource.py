@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 # Module API
 
-def import_resource(storage, place, schema_path, data_path):
+def import_resource(storage, table, schema_path, data_path):
 
     # Get data
     data = []
@@ -20,7 +20,7 @@ def import_resource(storage, place, schema_path, data_path):
     self.__table.add_data(data)
 
 
-def export_resource(storage, place, schema_path, data_path):
+def export_resource(storage, table, schema_path, data_path):
 
     # Ensure schema and data dirs
     for path in [schema_path, data_path]:

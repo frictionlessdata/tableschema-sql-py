@@ -14,7 +14,7 @@ sys.path.insert(0, '.')
 from jtssql import Storage
 
 
-def run(name='test', prefix='test_'):
+def run(table='test', prefix='test_'):
 
     # Storage
     engine = create_engine('sqlite:///:memory:')
@@ -22,26 +22,26 @@ def run(name='test', prefix='test_'):
 
     # Delete
     print('[Delete]')
-    print(storage.check_node(name))
-    if storage.check_node(name):
-        storage.delete_node(name)
+    print(storage.check_table(table))
+    if storage.check_table(table):
+        storage.delete_table(table)
 
     # Create
     print('[Create]')
-    print(storage.check_node(name))
-    storage.create_node(name, {'fields': [{'name': 'id', 'type': 'string'}]})
-    print(storage.check_node(name))
-    print(storage.describe_node(name))
+    print(storage.check_table(table))
+    storage.create_table(table, {'fields': [{'name': 'id', 'type': 'string'}]})
+    print(storage.check_table(table))
+    print(storage.describe_table(table))
 
     # Add data
     print('[Add data]')
-    storage.write_node(name, [('id1',), ('id2',)])
-    print(list(storage.read_node(name)))
+    storage.write_table(table, [('id1',), ('id2',)])
+    print(list(storage.read_table(table)))
 
     # Iterator
     print('[List]')
-    for node in storage:
-        print(node)
+    for table in storage:
+        print(table)
 
 
 if __name__ == '__main__':

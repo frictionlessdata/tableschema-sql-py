@@ -26,7 +26,7 @@ class Storage(object):
         self.__engine = engine
         self.__dbschema = dbschema
         self.__prefix = prefix
-        self.__nodes_cache = None
+        self.__tables_cache = None
 
     def __repr__(self):
 
@@ -40,12 +40,12 @@ class Storage(object):
         return text
 
     def __iter__(self):
-        return iter(self.__nodes)
+        return iter(self.__tables)
 
-    def check_node(self, name):
-        return name in self.__nodes
+    def check_table(self, name):
+        return name in self.__tables
 
-    def create_node(self, name, schema):
+    def create_table(self, name, schema):
         """Create table by schema.
 
         Parameters
@@ -64,7 +64,7 @@ class Storage(object):
         name = self.__prefix + name
 
         # Check not existent
-        if self.check_node(name):
+        if self.check_table(name):
             message = 'Table "%s" is already existent.' % self
             raise RuntimeError(message)
 
@@ -80,10 +80,10 @@ class Storage(object):
         table = Table(name, metadata, *columns, schema=self.__dbschema)
         table.create(self.__engine)
 
-        # Remove nodes cache
-        self.__nodes_cache = None
+        # Remove tables cache
+        self.__tables_cache = None
 
-    def delete_node(self, name):
+    def delete_table(self, name):
         """Delete table.
 
         Raises
@@ -97,7 +97,7 @@ class Storage(object):
         name = self.__prefix + name
 
         # Check existent
-        if self.check_node(name):
+        if self.check_table(name):
             message = 'Table "%s" is not existent.' % self
             raise RuntimeError(message)
 
@@ -108,10 +108,10 @@ class Storage(object):
                 schema=self.__dbschema)
         table.drop(self.__engine)
 
-        # Remove nodes cache
-        self.__nodes_cache = None
+        # Remove tables cache
+        self.__tables_cache = None
 
-    def describe_node(self, name):
+    def describe_table(self, name):
 
         # Add prefix
         name = self.__prefix + name
@@ -126,7 +126,7 @@ class Storage(object):
 
         return schema
 
-    def read_node(self, name):
+    def read_table(self, name):
 
         # Add prefix
         name = self.__prefix + name
@@ -141,10 +141,10 @@ class Storage(object):
 
         return list(result)
 
-    def write_node(self, name, data):
+    def write_table(self, name, data):
 
         # Get model and data
-        model = SchemaModel(self.describe_node(name))
+        model = SchemaModel(self.describe_table(name))
         cdata = []
         for row in data:
             rdata = {}
@@ -168,9 +168,9 @@ class Storage(object):
     # Private
 
     @property
-    def __nodes(self):
+    def __tables(self):
 
-        if self.__nodes_cache is None:
+        if self.__tables_cache is None:
 
             # Collect
             names = []
@@ -180,9 +180,9 @@ class Storage(object):
                     names.append(name)
 
             # Save
-            self.__nodes_cache = names
+            self.__tables_cache = names
 
-        return self.__nodes_cache
+        return self.__tables_cache
 
     def __convert_schema(self, schema):
         """Convert JSONTableSchema schema to SQLAlchemy columns.

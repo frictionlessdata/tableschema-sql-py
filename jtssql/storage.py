@@ -16,35 +16,22 @@ from jsontableschema.model import SchemaModel
 
 # Module API
 
-class Databox(object):
-    """SQL table gateway.
-
-    Parameters
-    ----------
-    engine: object
-        SQLAlchemy engine.
-    dbschema: str
-        SQL schema identifier.
-    table_id: str
-        SQL table identifier.
-
-    """
+class Storage(object):
 
     # Public
 
-    def __init__(self, room, name, engine, dbschema=None):
+    def __init__(self, engine, dbschema=None, prefix=''):
 
         # Set attributes
-        self.__room = room
-        self.__name = name
         self.__engine = engine
         self.__dbschema = dbschema
-        self.__schema = None
+        self.__prefix = prefix
+        self.__nodes_cache = None
 
     def __repr__(self):
 
         # Template and format
-        template = 'Databox <{name} on {engine}/{dbschema}>'
+        template = 'Storage <{name} on {engine}/{dbschema}>'
         text = template.format(
                 name = self.__name,
                 engine=self.__engine,
@@ -52,15 +39,13 @@ class Databox(object):
 
         return text
 
-    @classmethod
-    def list(cls, room, engine, dbschema=None):
-        names = []
-        for name in engine.table_names(schema=dbschema):
-            if name.startswith('room'+'___'):
-                names.append(name)
-        return names
+    def __iter__(self):
+        return iter(self.__nodes)
 
-    def create(self, schema):
+    def check_node(self, name):
+        return name in self.__nodes
+
+    def create_node(self, name, schema):
         """Create table by schema.
 
         Parameters
@@ -75,8 +60,11 @@ class Databox(object):
 
         """
 
+        # Add prefix
+        name = self.__prefix + name
+
         # Check not existent
-        if self.existent:
+        if self.check_node(name):
             message = 'Table "%s" is already existent.' % self
             raise RuntimeError(message)
 
@@ -89,10 +77,13 @@ class Databox(object):
 
         # Create table
         metadata = MetaData()
-        table = Table(self.__name, metadata, *columns, schema=self.__dbschema)
+        table = Table(name, metadata, *columns, schema=self.__dbschema)
         table.create(self.__engine)
 
-    def delete(self):
+        # Remove nodes cache
+        self.__nodes_cache = None
+
+    def delete_node(self, name):
         """Delete table.
 
         Raises
@@ -102,8 +93,11 @@ class Databox(object):
 
         """
 
+        # Add prefix
+        name = self.__prefix + name
+
         # Check existent
-        if not self.existent:
+        if self.check_node(name):
             message = 'Table "%s" is not existent.' % self
             raise RuntimeError(message)
 
@@ -114,80 +108,31 @@ class Databox(object):
                 schema=self.__dbschema)
         table.drop(self.__engine)
 
-        # Remove schema cache
-        self.__schema = None
+        # Remove nodes cache
+        self.__nodes_cache = None
 
-    @property
-    def existent(self):
-        """Return if databox is existent.
-        """
+    def describe_node(self, name):
 
-        try:
-            return self.__engine.dialect.has_table(
-                    self.__engine.connect(), self.__name,
-                    schema=self.__dbschema)
-        except OperationalError:
-            return False
-
-    @property
-    def schema(self):
-        """Return schema dict.
-        """
-
-        # Create cache
-        if getattr(self, '__schema', None) is None:
-
-            metadata = MetaData()
-            table = Table(self.__name, metadata,
-                    autoload=True, autoload_with=self.__engine,
-                    schema=self.__dbschema)
-
-            # Get schema
-            self.__schema = self.__restore_schema(table)
-
-        return self.__schema
-
-    def add_data(self, data):
-        """Add data to table.
-
-        Parameters
-        ----------
-        data: list
-            List of data tuples.
-
-        """
+        # Add prefix
+        name = self.__prefix + name
 
         metadata = MetaData()
-        table = Table(self.__name, metadata,
+        table = Table(name, metadata,
                 autoload=True, autoload_with=self.__engine,
                 schema=self.__dbschema)
 
-        # Get model and data
-        model = SchemaModel(self.schema)
-        cdata = []
-        for row in data:
-            rdata = {}
-            row = tuple(model.convert_row(*row))
-            for index, field in enumerate(self.schema['fields']):
-                rdata[field['name']] = row[index]
-            cdata.append(rdata)
+        # Get schema
+        schema = self.__restore_schema(table)
 
-        ins = table.insert()
-        conn = self.__engine.connect()
-        conn.execute(ins, cdata)
+        return schema
 
-    def get_data(self):
-        """Return table's data.
+    def read_node(self, name):
 
-        Returns
-        -------
-        generator
-            Generator of data tuples.
-
-        """
+        # Add prefix
+        name = self.__prefix + name
 
         metadata = MetaData()
-        table = Table(self.__name, metadata,
+        table = Table(name, metadata,
                 autoload=True, autoload_with=self.__engine,
                 schema=self.__dbschema)
 
@@ -196,7 +141,48 @@ class Databox(object):
 
         return list(result)
 
+    def write_node(self, name, data):
+
+        # Get model and data
+        model = SchemaModel(self.describe_node(name))
+        cdata = []
+        for row in data:
+            rdata = {}
+            row = tuple(model.convert_row(*row))
+            for index, field in enumerate(model.fields):
+                rdata[field['name']] = row[index]
+            cdata.append(rdata)
+
+        # Add prefix
+        name = self.__prefix + name
+
+        metadata = MetaData()
+        table = Table(name, metadata,
+                autoload=True, autoload_with=self.__engine,
+                schema=self.__dbschema)
+
+        ins = table.insert()
+        conn = self.__engine.connect()
+        conn.execute(ins, cdata)
+
     # Private
+
+    @property
+    def __nodes(self):
+
+        if self.__nodes_cache is None:
+
+            # Collect
+            names = []
+            for name in self.__engine.table_names(schema=self.__dbschema):
+                if name.startswith(self.__prefix):
+                    name = name.replace(self.__prefix, '', 1)
+                    names.append(name)
+
+            # Save
+            self.__nodes_cache = names
+
+        return self.__nodes_cache
 
     def __convert_schema(self, schema):
         """Convert JSONTableSchema schema to SQLAlchemy columns.

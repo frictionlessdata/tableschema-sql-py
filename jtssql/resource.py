@@ -15,7 +15,7 @@ from jsontableschema.model import SchemaModel
 
 # Module API
 
-def import_resource(storage, table, schema_path, data_path):
+def import_resource(storage, table, schema_path, data_path, force=False):
     """Import JSONTableSchema resource to storage's table.
 
     Parameters
@@ -37,8 +37,10 @@ def import_resource(storage, table, schema_path, data_path):
 
     # Create table
     if storage.check(table):
-        message = 'Table %s is already existent' % table
-        raise RuntimeError(message)
+        if not force:
+            message = 'Table %s is already existent' % table
+            raise RuntimeError(message)
+        storage.delete(table)
     storage.create(table, schema)
 
     # Write data to table

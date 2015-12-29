@@ -8,7 +8,6 @@ from sqlalchemy import (
         Table, Column, MetaData,
         Text, TEXT, Integer, INTEGER, Float, FLOAT, Boolean, BOOLEAN)
 from sqlalchemy.sql import select
-from sqlalchemy.schema import CreateSchema
 from jsontableschema.model import SchemaModel
 
 
@@ -64,10 +63,6 @@ class Storage(object):
 
         # Convert jts schema
         columns = self.__convert_schema(schema)
-
-        # Create schema
-        if self.__dbschema is not None:
-            self.__engine.execute(CreateSchema(self.__dbschema))
 
         # Create table
         name = self.__prefix + table

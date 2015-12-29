@@ -50,7 +50,7 @@ engine = create_engine('sqlite:///:memory:')
 #### Storage
 
 On level between the high-level interface and SQL wrapper
-package uses Tabular Storage concept:
+package uses **Tabular Storage** concept:
 
 ![Tabular Storage](diagram.png)
 

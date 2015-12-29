@@ -38,10 +38,9 @@ def run(prefix='test_', table='test'):
     storage.write(table, [('id1',), ('id2',)])
     print(list(storage.read(table)))
 
-    # Iterator
-    print('[List]')
-    for table in storage:
-        print(table)
+    # Tables
+    print('[Tables]')
+    print(storage.tables)
 
 
 if __name__ == '__main__':

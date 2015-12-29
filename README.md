@@ -52,16 +52,7 @@ engine = create_engine('sqlite:///:memory:')
 On level between the high-level interface and SQL wrapper
 package uses Tabular Storage concept:
 
-```
-Storage
-    + init (**options)
-    + check (table)
-    + create (table, schema)
-    + delete (table)
-    + describe (table)
-    + read (table)
-    + write (table, data)
-```
+![Tabular Storage](diagram.png)
 
 #### Mappings
 

@@ -23,7 +23,7 @@ class Storage(object):
         self.__engine = engine
         self.__dbschema = dbschema
         self.__prefix = prefix
-        self.__tables_cache = None
+        self.__tables = None
 
     def __repr__(self):
 
@@ -35,11 +35,25 @@ class Storage(object):
 
         return text
 
-    def __iter__(self):
-        return iter(self.__tables)
+    @property
+    def tables(self):
+
+        if self.__tables is None:
+
+            # Collect
+            tables = []
+            for table in self.__engine.table_names(schema=self.__dbschema):
+                if table.startswith(self.__prefix):
+                    table = table.replace(self.__prefix, '', 1)
+                    tables.append(table)
+
+            # Save
+            self.__tables = tables
+
+        return self.__tables
 
     def check(self, table):
-        return table in self.__tables
+        return table in self.tables
 
     def create(self, table, schema):
         """Create table by schema.
@@ -70,7 +84,7 @@ class Storage(object):
         dbtable.create(self.__engine)
 
         # Remove tables cache
-        self.__tables_cache = None
+        self.__tables = None
 
     def delete(self, table):
         """Delete table.
@@ -93,7 +107,7 @@ class Storage(object):
         dbtable.drop(self.__engine)
 
         # Remove tables cache
-        self.__tables_cache = None
+        self.__tables = None
 
     def describe(self, table):
 
@@ -150,23 +164,6 @@ class Storage(object):
         conn.execute(ins, cdata)
 
     # Private
-
-    @property
-    def __tables(self):
-
-        if self.__tables_cache is None:
-
-            # Collect
-            tables = []
-            for table in self.__engine.table_names(schema=self.__dbschema):
-                if table.startswith(self.__prefix):
-                    table = table.replace(self.__prefix, '', 1)
-                    tables.append(table)
-
-            # Save
-            self.__tables_cache = tables
-
-        return self.__tables_cache
 
     def __convert_schema(self, schema):
         """Convert JSONTableSchema schema to SQLAlchemy columns.

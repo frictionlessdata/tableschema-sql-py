@@ -34,13 +34,13 @@ class TestTable(unittest.TestCase):
     def test___repr__(self):
         assert repr(self.storage)
 
-    def test___iter__(self):
+    def test_tables(self):
 
         # Mocks
         self.engine.table_names.return_value = ['prefix_table1', 'prefix_table2']
 
         # Assert values
-        assert list(iter(self.storage)) == ['table1', 'table2']
+        assert self.storage.tables == ['table1', 'table2']
 
     def test_check(self):
 

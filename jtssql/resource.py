@@ -29,6 +29,8 @@ def import_resource(storage, table, schema, data, force=False):
         jSONTableSchema dict or path to schema file.
     data: str
         Path to data file.
+    force: bool
+        Force table rewriting If it already exists.
 
     """
 

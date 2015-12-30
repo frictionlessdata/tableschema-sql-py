@@ -69,17 +69,12 @@ def export_resource(storage, table, schema, data):
 
     """
 
-    # Ensure export directories
-    for path in [schema, data]:
-        dirpath = os.path.dirname(path)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-
     # Update schema dict
     if not isinstance(schema, six.string_types):
         schema.update(storage.describe(table))
     # Write schema on disk
     else:
+        _ensure_dir(schema)
         with io.open(schema,
                      mode=_write_mode,
                      encoding=_write_encoding) as file:
@@ -87,6 +82,7 @@ def export_resource(storage, table, schema, data):
             json.dump(schema, file, indent=4)
 
     # Write data on disk
+    _ensure_dir(data)
     with io.open(data,
                  mode=_write_mode,
                  newline=_write_newline,
@@ -112,3 +108,9 @@ if six.PY2:
 _write_newline = ''
 if six.PY2:
     _write_newline = None
+
+
+def _ensure_dir(path):
+    dirpath = os.path.dirname(path)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)

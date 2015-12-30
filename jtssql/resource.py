@@ -62,8 +62,8 @@ def export_resource(storage, table, schema, data):
         Storage object.
     table: str
         Table name.
-    schema: str
-        Path to schema file.
+    schema: dict/str
+        Dict to store schema or path to schema file.
     data: str
         Path to data file.
 
@@ -75,12 +75,16 @@ def export_resource(storage, table, schema, data):
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
+    # Update schema dict
+    if not isinstance(schema, six.string_types):
+        schema.update(storage.describe(table))
     # Write schema on disk
-    with io.open(schema,
-                 mode=_write_mode,
-                 encoding=_write_encoding) as file:
-        schema = storage.describe(table)
-        json.dump(schema, file, indent=4)
+    else:
+        with io.open(schema,
+                     mode=_write_mode,
+                     encoding=_write_encoding) as file:
+            schema = storage.describe(table)
+            json.dump(schema, file, indent=4)
 
     # Write data on disk
     with io.open(data,

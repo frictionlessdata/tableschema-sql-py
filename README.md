@@ -11,18 +11,17 @@ This section is intended to be used by end-users of the library.
 
 ### Import/Export
 
-> See section below how to get SQL engine.
+> See section below how to get tabular storage object.
 
 High-level API is easy to use.
 
 Having `schema.json` (JSONTableSchema) and `data.csv` in
-current directory we can import it to sql database:
+current directory we can import it to the sql database:
 
 ```python
 import jtssql
 
-storage = jtssql.Storage(<engine>)
-jtssql.import_resource(storage, 'table', 'schema.json', 'data.csv')
+jtssql.import_resource(<storage>, 'table', 'schema.json', 'data.csv')
 ```
 
 Also we can export it from sql database:
@@ -30,22 +29,23 @@ Also we can export it from sql database:
 ```python
 import jtssql
 
-storage = jtssql.Storage(<engine>)
-jtssql.export_resource(storage, 'table', 'schema.json', 'data.csv')
+jtssql.export_resource(<storage>, 'table', 'schema.json', 'data.csv')
 ```
 
-### SQL Engine
+### Tabular Storage
 
-SQLAlchemy is used as sql wrapper. We can get engine this way:
+SQLAlchemy is used as sql wrapper.
+We can get storage this way:
 
 ```python
+import jtssql
 from sqlalchemy import create_engine
 
 engine = create_engine('sqlite:///:memory:')
+storage = jtssql.Storage(engine)
 ```
 
 ### Design Overview
-
 
 #### Storage
 

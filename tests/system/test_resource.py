@@ -23,8 +23,8 @@ class TestResource(unittest.TestCase):
     def setUp(self):
 
         # Export files
-        _, self.export_schema_path = tempfile.mkstemp()
-        _, self.export_data_path = tempfile.mkstemp()
+        _, self.export_schema = tempfile.mkstemp()
+        _, self.export_data = tempfile.mkstemp()
 
         # Python version
         self.version = '%s_%s' % (sys.version_info.major, sys.version_info.minor)
@@ -33,8 +33,8 @@ class TestResource(unittest.TestCase):
 
         # Delete temp files
         try:
-            os.remove(self.export_schema_path)
-            os.remove(self.export_data_path)
+            os.remove(self.export_schema)
+            os.remove(self.export_data)
         except Exception:
             pass
 
@@ -45,16 +45,16 @@ class TestResource(unittest.TestCase):
         # Run example
         scope = run(
             table='resource_test_%s' % self.version,
-            export_schema_path=self.export_schema_path,
-            export_data_path=self.export_data_path)
+            export_schema=self.export_schema,
+            export_data=self.export_data)
 
         # Assert schema
-        actual = json.load(io.open(self.export_schema_path, encoding='utf-8'))
-        expected = json.load(io.open(scope['import_schema_path'], encoding='utf-8'))
+        actual = json.load(io.open(self.export_schema, encoding='utf-8'))
+        expected = json.load(io.open(scope['import_schema'], encoding='utf-8'))
         assert actual == expected
 
         # Assert data
         # TODO: parse csv
-        actual = io.open(self.export_data_path, encoding='utf-8').read()
-        expected = io.open(scope['import_data_path'], encoding='utf-8').read()
+        actual = io.open(self.export_data, encoding='utf-8').read()
+        expected = io.open(scope['import_data'], encoding='utf-8').read()
         assert actual == expected

@@ -18,7 +18,8 @@ def run(import_schema='examples/data/spending/schema.json',
         export_schema='tmp/schema.json',
         import_data='examples/data/spending/data.csv',
         export_data='tmp/data.csv',
-        prefix='test_', table='test'):
+        prefix='test_',
+        table='test'):
 
     # Storage
     engine = create_engine('sqlite:///:memory:')

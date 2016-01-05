@@ -22,6 +22,7 @@ class Test_import_resource(unittest.TestCase):
 
     # Tests
 
+    @unittest.skip('write')
     def test(self):
         pass
 
@@ -36,5 +37,6 @@ class Test_export_resource(unittest.TestCase):
 
     # Tests
 
+    @unittest.skip('write')
     def test(self):
         pass

@@ -5,10 +5,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
-from sqlalchemy import (
-        Table, Column, MetaData,
-        Text, TEXT, Integer, INTEGER, Float, FLOAT, Boolean, BOOLEAN)
-from sqlalchemy.sql import select
+from sqlalchemy import Table, Column, MetaData, Text, Integer, Float, Boolean
 from jsontableschema.model import SchemaModel
 
 
@@ -24,7 +21,12 @@ class Storage(object):
         self.__engine = engine
         self.__dbschema = dbschema
         self.__prefix = prefix
-        self.__tables = None
+
+        # Create metadata
+        self.__metadata = MetaData(
+                bind=self.__engine,
+                schema=self.__dbschema,
+                reflect=True)
 
     def __repr__(self):
 
@@ -39,19 +41,14 @@ class Storage(object):
     @property
     def tables(self):
 
-        if self.__tables is None:
+        # Collect
+        tables = []
+        for dbtable in self.__metadata.tables.values():
+            table = dbtable.name
+            table = self.__restore_table(table)
+            tables.append(table)
 
-            # Collect
-            tables = []
-            for table in self.__engine.table_names(schema=self.__dbschema):
-                if table.startswith(self.__prefix):
-                    table = table.replace(self.__prefix, '', 1)
-                    tables.append(table)
-
-            # Save
-            self.__tables = tables
-
-        return self.__tables
+        return tables
 
     def check(self, table):
         return table in self.tables
@@ -82,25 +79,29 @@ class Storage(object):
             schemas = [schema]
 
         # Iterate over tables/schemas
-        metadata = MetaData(bind=self.__engine, schema=self.__dbschema)
         for table, schema in zip(tables, schemas):
 
             # Check not existent
             if self.check(table):
-                message = 'Table "%s" is already existent.' % table
+                message = 'Table "%s" already exists.' % table
                 raise RuntimeError(message)
 
             # Define table
-            name = self.__prefix + table
+            table = self.__convert_table(table)
             elements = self.__convert_schema(schema)
-            Table(name, metadata, *elements)
+            Table(table, self.__metadata, *elements)
 
-        # Create all tables
-        metadata.create_all()
-        self.__tables = None
+        # Create tables, update metadata
+        self.__metadata.create_all()
+        # Metadata reflect is auto
 
     def delete(self, table):
         """Delete table.
+
+        Parameters
+        ----------
+        table: str/list
+            Table name or list of table names.
 
         Raises
         ------
@@ -109,52 +110,47 @@ class Storage(object):
 
         """
 
-        # Check existent
-        if not self.check(table):
-            message = 'Table "%s" is not existent.' % self
-            raise RuntimeError(message)
+        # Make lists
+        tables = table
+        if isinstance(table, six.string_types):
+            tables = [table]
 
-        # Drop table
-        name = self.__prefix + table
-        dbtable = Table(name, MetaData(), schema=self.__dbschema)
-        dbtable.drop(self.__engine)
+        # Iterate over tables
+        targets = []
+        for table in tables:
 
-        # Remove tables cache
-        self.__tables = None
+            # Check existent
+            if not self.check(table):
+                message = 'Table "%s" is not existent.' % self
+                raise RuntimeError(message)
+
+            # Add table to targets
+            table = self.__convert_table(table)
+            targets.append(table)
+
+        # Drop tables, update metadata
+        self.__metadata.drop_all(tables=[targets])
+        self.__metadata.reflect()
 
     def describe(self, table):
 
-        # Add prefix
-        table = self.__prefix + table
-
-        dbtable = Table(
-                table, MetaData(),
-                autoload=True, autoload_with=self.__engine,
-                schema=self.__dbschema)
-
         # Get schema
+        dbtable = self.__get_dbtable(table)
         schema = self.__restore_schema(dbtable)
 
         return schema
 
     def read(self, table):
 
-        # Add prefix
-        table = self.__prefix + table
-
-        table = Table(
-                table, MetaData(),
-                autoload=True, autoload_with=self.__engine,
-                schema=self.__dbschema)
-
-        conn = self.__engine.connect()
-        result = conn.execute(select([table]))
+        # Get result
+        dbtable = self.__get_dbtable(table)
+        result = dbtable.select().execute()
 
         return list(result)
 
     def write(self, table, data):
 
-        # Get model and data
+        # Process data
         model = SchemaModel(self.describe(table))
         cdata = []
         for row in data:
@@ -164,19 +160,32 @@ class Storage(object):
                 rdata[field['name']] = row[index]
             cdata.append(rdata)
 
-        # Add prefix
-        table = self.__prefix + table
-
-        table = Table(
-                table, MetaData(),
-                autoload=True, autoload_with=self.__engine,
-                schema=self.__dbschema)
-
-        ins = table.insert()
-        conn = self.__engine.connect()
-        conn.execute(ins, cdata)
+        # Insert data
+        dbtable = self.__get_dbtable(table)
+        dbtable.insert().execute(cdata)
 
     # Private
+
+    def __get_dbtable(self, table):
+        """Return dbtable instance from metadata.
+        """
+
+        # Prepare dict key
+        key = self.__convert_table(table)
+        if self.__dbschema:
+            key = '.'.join(self.__prefix, key)
+
+        return self.__metadata.tables[key]
+
+    def __convert_table(self, table):
+        """Convert high-level table name to database name.
+        """
+        return self.__prefix + table
+
+    def __restore_table(self, table):
+        """Restore database table name to high-level name.
+        """
+        return table.replace(self.__prefix, '', 1)
 
     def __convert_schema(self, schema):
         """Convert JSONTableSchema schema to SQLAlchemy columns.
@@ -209,10 +218,10 @@ class Storage(object):
 
         # Mapping
         mapping = {
-            TEXT: 'string',
-            INTEGER: 'integer',
-            FLOAT: 'number',
-            BOOLEAN: 'boolean',
+            Text: 'string',
+            Integer: 'integer',
+            Float: 'number',
+            Boolean: 'boolean',
         }
 
         # Convert

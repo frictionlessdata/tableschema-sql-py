@@ -146,12 +146,21 @@ class Storage(object):
         dbtable = self.__get_dbtable(table)
         result = dbtable.select().execute()
 
-        return list(result)
+        # Get data
+        data = []
+        schema = self.describe(table)
+        model = SchemaModel(schema)
+        for row in result:
+            row = tuple(model.convert_row(*row))
+            data.append(row)
+
+        return data
 
     def write(self, table, data):
 
         # Process data
-        model = SchemaModel(self.describe(table))
+        schema = self.describe(table)
+        model = SchemaModel(schema)
         cdata = []
         for row in data:
             rdata = {}

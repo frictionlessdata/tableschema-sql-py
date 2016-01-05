@@ -200,7 +200,7 @@ class Storage(object):
         }
 
         # Convert
-        columns = []
+        elements = []
         for field in schema['fields']:
             try:
                 column_type = mapping[field['type']]
@@ -208,9 +208,9 @@ class Storage(object):
                 message = 'Type %s is not supported' % field['type']
                 raise TypeError(message)
             column = Column(field['name'], column_type)
-            columns.append(column)
+            elements.append(column)
 
-        return columns
+        return elements
 
     def __restore_schema(self, dbtable):
         """Convert SQLAlchemy table reflection to JSONTableSchema schema.

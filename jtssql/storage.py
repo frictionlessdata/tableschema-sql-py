@@ -40,18 +40,26 @@ class Storage(object):
 
     @property
     def tables(self):
+        """Return list of storage's table names.
+        """
 
         # Collect
         tables = []
         for dbtable in self.__metadata.tables.values():
             table = dbtable.name
-            table = self.__restore_table(table)
+            table = _restore_table(table, self.__prefix)
             tables.append(table)
 
         return tables
 
     def check(self, table):
-        return table in self.tables
+        """Return if table exists.
+        """
+
+        # Check existence
+        existence = table in self.tables
+
+        return existence
 
     def create(self, table, schema):
         """Create table by schema.
@@ -87,8 +95,8 @@ class Storage(object):
                 raise RuntimeError(message)
 
             # Define table
-            table = self.__convert_table(table)
-            columns, constraints = self.__convert_schema(schema)
+            table = _convert_table(table, self.__prefix)
+            columns, constraints = _convert_schema(schema)
             Table(table, self.__metadata, *(columns+constraints))
 
         # Create tables, update metadata
@@ -125,7 +133,7 @@ class Storage(object):
                 raise RuntimeError(message)
 
             # Add table to targets
-            table = self.__convert_table(table)
+            table = _convert_table(table, self.__prefix)
             targets.append(table)
 
         # Drop tables, update metadata
@@ -133,14 +141,18 @@ class Storage(object):
         self.__metadata.reflect()
 
     def describe(self, table):
+        """Return table's JSONTableSchema descriptor.
+        """
 
         # Get schema
         dbtable = self.__get_dbtable(table)
-        schema = self.__restore_schema(dbtable.columns, dbtable.constraints)
+        schema = _restore_schema(dbtable.columns, dbtable.constraints)
 
         return schema
 
     def read(self, table):
+        """Return table's data.
+        """
 
         # Get result
         dbtable = self.__get_dbtable(table)
@@ -157,6 +169,8 @@ class Storage(object):
         return data
 
     def write(self, table, data):
+        """Write data to table.
+        """
 
         # Process data
         schema = self.describe(table)
@@ -180,72 +194,78 @@ class Storage(object):
         """
 
         # Prepare dict key
-        key = self.__convert_table(table)
+        key = _convert_table(table, self.__prefix)
         if self.__dbschema:
-            key = '.'.join(self.__prefix, key)
+            key = '.'.join(self.__dbschema, key)
 
         return self.__metadata.tables[key]
 
-    def __convert_table(self, table):
-        """Convert high-level table name to database name.
-        """
-        return self.__prefix + table
 
-    def __restore_table(self, table):
-        """Restore database table name to high-level name.
-        """
-        return table.replace(self.__prefix, '', 1)
+# Internal
 
-    def __convert_schema(self, schema):
-        """Convert JSONTableSchema schema to SQLAlchemy columns.
-        """
+def _convert_table(table, prefix):
+    """Convert high-level table name to database name.
+    """
+    return prefix + table
 
-        # Mapping
-        mapping = {
-            'string': Text(),
-            'integer': Integer(),
-            'number': Float(),
-            'boolean': Boolean(),
-        }
 
-        # Columns
-        columns = []
-        for field in schema['fields']:
-            try:
-                column_type = mapping[field['type']]
-            except KeyError:
-                message = 'Type %s is not supported' % field['type']
-                raise TypeError(message)
-            column = Column(field['name'], column_type)
-            columns.append(column)
+def _restore_table(table, prefix):
+    """Restore database table name to high-level name.
+    """
+    return table.replace(prefix, '', 1)
 
-        # Constraints
-        constraints = []
 
-        return (columns, constraints)
+def _convert_schema(schema):
+    """Convert JSONTableSchema schema to SQLAlchemy columns and constraints.
+    """
 
-    def __restore_schema(self, columns, constraints):
-        """Convert SQLAlchemy table reflection to JSONTableSchema schema.
-        """
+    # Mapping
+    mapping = {
+        'string': Text(),
+        'integer': Integer(),
+        'number': Float(),
+        'boolean': Boolean(),
+    }
 
-        # Mapping
-        mapping = {
-            Text: 'string',
-            Integer: 'integer',
-            Float: 'number',
-            Boolean: 'boolean',
-        }
+    # Columns
+    columns = []
+    for field in schema['fields']:
+        try:
+            column_type = mapping[field['type']]
+        except KeyError:
+            message = 'Type %s is not supported' % field['type']
+            raise TypeError(message)
+        column = Column(field['name'], column_type)
+        columns.append(column)
 
-        # Convert
-        fields = []
-        for column in columns:
-            try:
-                field_type = mapping[column.type.__class__]
-            except KeyError:
-                message = 'Type %s is not supported' % column.type
-                raise TypeError(message)
-            field = {'name': column.name, 'type': field_type}
-            fields.append(field)
-        schema = {'fields': fields}
+    # Constraints
+    constraints = []
 
-        return schema
+    return (columns, constraints)
+
+
+def _restore_schema(columns, constraints):
+    """Convert SQLAlchemy columns and constraints to JSONTableSchema schema.
+    """
+
+    # Mapping
+    mapping = {
+        Text: 'string',
+        Integer: 'integer',
+        Float: 'number',
+        Boolean: 'boolean',
+    }
+
+    # Convert
+    fields = []
+    for column in columns:
+        try:
+            field_type = mapping[column.type.__class__]
+        except KeyError:
+            message = 'Type %s is not supported' % column.type
+            raise TypeError(message)
+        field = {'name': column.name, 'type': field_type}
+        fields.append(field)
+    schema = {'fields': fields}
+
+    return schema

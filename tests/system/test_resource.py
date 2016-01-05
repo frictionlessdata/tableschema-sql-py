@@ -54,7 +54,6 @@ class TestResource(unittest.TestCase):
         assert actual == expected
 
         # Assert data
-        # TODO: parse csv
         actual = io.open(self.export_data, encoding='utf-8').read()
         expected = io.open(scope['import_data'], encoding='utf-8').read()
         assert actual == expected

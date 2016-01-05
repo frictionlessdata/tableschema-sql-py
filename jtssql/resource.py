@@ -15,7 +15,6 @@ from jsontableschema.model import SchemaModel
 
 # Module API
 
-# TODO: add support to data is list?
 def import_resource(storage, table, schema, data, force=False):
     """Import JSONTableSchema resource to storage's table.
 

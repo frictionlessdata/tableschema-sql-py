@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 
 import pytest
 import unittest
-from collections import OrderedDict
 from mock import MagicMock, patch, ANY
 from importlib import import_module
 module = import_module('jtssql.storage')
@@ -44,9 +43,7 @@ class TestTable(unittest.TestCase):
         dbtable2 = MagicMock()
         dbtable1.name = 'prefix_table1'
         dbtable2.name = 'prefix_table2'
-        self.metadata.tables = OrderedDict()
-        self.metadata.tables['dbtable1'] = dbtable1
-        self.metadata.tables['dbtable2'] = dbtable2
+        self.metadata.sorted_tables = [dbtable1, dbtable2]
 
         # Assert values
         assert self.storage.tables == ['table1', 'table2']
@@ -58,9 +55,7 @@ class TestTable(unittest.TestCase):
         dbtable2 = MagicMock()
         dbtable1.name = 'prefix_table1'
         dbtable2.name = 'prefix_table2'
-        self.metadata.tables = OrderedDict()
-        self.metadata.tables['dbtable1'] = dbtable1
-        self.metadata.tables['dbtable2'] = dbtable2
+        self.metadata.sorted_tables = [dbtable1, dbtable2]
 
         # Assert values
         assert self.storage.check('table1')

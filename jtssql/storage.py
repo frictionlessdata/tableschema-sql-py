@@ -45,7 +45,7 @@ class Storage(object):
 
         # Collect
         tables = []
-        for dbtable in self.__metadata.tables.values():
+        for dbtable in self.__metadata.sorted_tables:
             table = dbtable.name
             table = _restore_table(table, self.__prefix)
             tables.append(table)

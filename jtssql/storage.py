@@ -88,8 +88,8 @@ class Storage(object):
 
             # Define table
             table = self.__convert_table(table)
-            elements = self.__convert_schema(schema)
-            Table(table, self.__metadata, *elements)
+            columns, constraints = self.__convert_schema(schema)
+            Table(table, self.__metadata, *(columns+constraints))
 
         # Create tables, update metadata
         self.__metadata.create_all()
@@ -136,7 +136,7 @@ class Storage(object):
 
         # Get schema
         dbtable = self.__get_dbtable(table)
-        schema = self.__restore_schema(dbtable)
+        schema = self.__restore_schema(dbtable.columns, dbtable.constraints)
 
         return schema
 
@@ -208,8 +208,8 @@ class Storage(object):
             'boolean': Boolean(),
         }
 
-        # Convert
-        elements = []
+        # Columns
+        columns = []
         for field in schema['fields']:
             try:
                 column_type = mapping[field['type']]
@@ -217,11 +217,14 @@ class Storage(object):
                 message = 'Type %s is not supported' % field['type']
                 raise TypeError(message)
             column = Column(field['name'], column_type)
-            elements.append(column)
+            columns.append(column)
 
-        return elements
+        # Constraints
+        constraints = []
 
-    def __restore_schema(self, dbtable):
+        return (columns, constraints)
+
+    def __restore_schema(self, columns, constraints):
         """Convert SQLAlchemy table reflection to JSONTableSchema schema.
         """
 
@@ -235,7 +238,7 @@ class Storage(object):
 
         # Convert
         fields = []
-        for column in dbtable.columns:
+        for column in columns:
             try:
                 field_type = mapping[column.type.__class__]
             except KeyError:

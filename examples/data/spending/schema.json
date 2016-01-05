@@ -16,5 +16,6 @@
             "name": "amount",
             "type": "number"
         }
-    ]
+    ],
+    "primaryKey": "id"
 }

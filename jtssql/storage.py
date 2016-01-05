@@ -5,8 +5,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
-from sqlalchemy import Table, Column, MetaData, Text, Integer, Float, Boolean
 from jsontableschema.model import SchemaModel
+from sqlalchemy import (
+        Table, Column, MetaData, PrimaryKeyConstraint,
+        Text, Integer, Float, Boolean)
 
 
 # Module API
@@ -219,6 +221,10 @@ def _convert_schema(schema):
     """Convert JSONTableSchema schema to SQLAlchemy columns and constraints.
     """
 
+    # Init
+    columns = []
+    constraints = []
+
     # Mapping
     mapping = {
         'string': Text(),
@@ -227,8 +233,7 @@ def _convert_schema(schema):
         'boolean': Boolean(),
     }
 
-    # Columns
-    columns = []
+    # Fields
     for field in schema['fields']:
         try:
             column_type = mapping[field['type']]
@@ -238,8 +243,18 @@ def _convert_schema(schema):
         column = Column(field['name'], column_type)
         columns.append(column)
 
-    # Constraints
-    constraints = []
+    # Primary key
+    pk = schema.get('primaryKey', None)
+    if pk is not None:
+        if isinstance(pk, six.string_types):
+            pk = [pk]
+        constraint = PrimaryKeyConstraint(*pk)
+        constraints.append(constraint)
+
+    # Foreign key
+    fks = schema.get('foreignKeys', [])
+    for fk in fks:
+        pass
 
     return (columns, constraints)
 
@@ -247,6 +262,9 @@ def _convert_schema(schema):
 def _restore_schema(columns, constraints):
     """Convert SQLAlchemy columns and constraints to JSONTableSchema schema.
     """
+
+    # Init
+    schema = {}
 
     # Mapping
     mapping = {
@@ -256,7 +274,7 @@ def _restore_schema(columns, constraints):
         Boolean: 'boolean',
     }
 
-    # Convert
+    # Fields
     fields = []
     for column in columns:
         try:
@@ -266,6 +284,17 @@ def _restore_schema(columns, constraints):
             raise TypeError(message)
         field = {'name': column.name, 'type': field_type}
         fields.append(field)
-    schema = {'fields': fields}
+    schema['fields'] = fields
+
+    # Primary key
+    pk = []
+    for constraint in constraints:
+        if isinstance(constraint, PrimaryKeyConstraint):
+            for column in constraint.columns:
+                pk.append(column.name)
+    if len(pk) > 0:
+        if len(pk) == 1:
+            pk = pk.pop()
+        schema['primaryKey'] = pk
 
     return schema

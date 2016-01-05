@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import six
 from sqlalchemy import (
         Table, Column, MetaData,
         Text, TEXT, Integer, INTEGER, Float, FLOAT, Boolean, BOOLEAN)
@@ -60,30 +61,42 @@ class Storage(object):
 
         Parameters
         ----------
-        schema: dict
-            BigQuery schema descriptor.
+        table: str/list
+            Table name or list of table names.
+        schema: dict/list
+            JSONTableSchema descriptor or list of them.
 
         Raises
         ------
         RuntimeError
-            If table is already existent.
+            If table already exists.
 
         """
 
-        # Check not existent
-        if self.check(table):
-            message = 'Table "%s" is already existent.' % table
-            raise RuntimeError(message)
+        # Make lists
+        tables = table
+        if isinstance(table, six.string_types):
+            tables = [table]
+        schemas = schema
+        if isinstance(schema, dict):
+            schemas = [schema]
 
-        # Convert jts schema
-        columns = self.__convert_schema(schema)
+        # Iterate over tables/schemas
+        metadata = MetaData(bind=self.__engine, schema=self.__dbschema)
+        for table, schema in zip(tables, schemas):
 
-        # Create table
-        name = self.__prefix + table
-        dbtable = Table(name, MetaData(), *columns, schema=self.__dbschema)
-        dbtable.create(self.__engine)
+            # Check not existent
+            if self.check(table):
+                message = 'Table "%s" is already existent.' % table
+                raise RuntimeError(message)
 
-        # Remove tables cache
+            # Define table
+            name = self.__prefix + table
+            elements = self.__convert_schema(schema)
+            Table(name, metadata, *elements)
+
+        # Create all tables
+        metadata.create_all()
         self.__tables = None
 
     def delete(self, table):

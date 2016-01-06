@@ -9,7 +9,7 @@ import os
 import csv
 import six
 import json
-from tabulator import topen, processors
+from tabulator import topen
 from jsontableschema.model import SchemaModel
 
 
@@ -39,7 +39,7 @@ def import_resource(storage, table, schema, data, force=False):
     # Create table
     if storage.check(table):
         if not force:
-            message = 'Table %s is already existent' % table
+            message = 'Table %s already exists' % table
             raise RuntimeError(message)
         storage.delete(table)
     storage.create(table, schema)

@@ -127,20 +127,21 @@ class Storage(object):
             tables = [table]
 
         # Iterate over tables
-        targets = []
+        dbtables = []
         for table in tables:
 
             # Check existent
             if not self.check(table):
-                message = 'Table "%s" is not existent.' % self
+                message = 'Table "%s" doesn\'t exist.' % self
                 raise RuntimeError(message)
 
-            # Add table to targets
-            table = _convert_table(table, self.__prefix)
-            targets.append(table)
+            # Add table to dbtables
+            dbtable = self.__get_dbtable(table)
+            dbtables.append(dbtable)
 
         # Drop tables, update metadata
-        self.__metadata.drop_all(tables=[targets])
+        self.__metadata.drop_all(tables=dbtables)
+        self.__metadata.clear()
         self.__metadata.reflect()
 
     def describe(self, table):

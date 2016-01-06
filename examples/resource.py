@@ -14,9 +14,9 @@ sys.path.insert(0, '.')
 import jtssql
 
 
-def run(import_schema='examples/data/default/schema.json',
+def run(import_schema='examples/data/spending/schema.json',
         export_schema='tmp/schema.json',
-        import_data='examples/data/default/data.csv',
+        import_data='examples/data/spending/data.csv',
         export_data='tmp/data.csv',
         prefix='test_',
         table='test'):

@@ -14,10 +14,7 @@ sys.path.insert(0, '.')
 import jtssql
 
 
-def run(schema={'fields': [{'name': 'id', 'type': 'string'}]},
-        data=[('id1',), ('id2',)],
-        prefix='test_',
-        table='test'):
+def run(prefix='test_', table='test'):
 
     # Storage
     engine = create_engine('sqlite:///:memory:')
@@ -32,13 +29,13 @@ def run(schema={'fields': [{'name': 'id', 'type': 'string'}]},
     # Create
     print('[Create]')
     print(storage.check(table))
-    storage.create(table, schema)
+    storage.create(table, {'fields': [{'name': 'id', 'type': 'string'}]})
     print(storage.check(table))
     print(storage.describe(table))
 
     # Add data
     print('[Add data]')
-    storage.write(table, data)
+    storage.write(table, [('id1',), ('id2',)])
     print(list(storage.read(table)))
 
     # Tables

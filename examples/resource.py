@@ -23,6 +23,7 @@ def run(import_schema='examples/data/spending/schema.json',
 
     # Storage
     engine = create_engine('sqlite:///:memory:')
+    #engine = create_engine('postgresql://roll@localhost/jsontableschema')
     storage = jtssql.Storage(engine=engine, prefix=prefix)
 
     # Import

@@ -1,3 +1,3 @@
-id,name,current,amount
-A3001,Taxes,True,10000.5
-A5032,Parking Fees,False,2000.5
+id,parent,name,current,amount
+A3001,A3001,Taxes,True,10000.5
+A5032,A3001,Parking Fees,False,2000.5

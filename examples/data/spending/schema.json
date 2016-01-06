@@ -5,6 +5,10 @@
             "type": "string"
         },
         {
+            "name": "parent",
+            "type": "string"
+        },
+        {
             "name": "name",
             "type": "string"
         },
@@ -17,5 +21,14 @@
             "type": "number"
         }
     ],
-    "primaryKey": "id"
+    "primaryKey": "id",
+    "foreignKeys": [
+        {
+            "fields": "parent",
+            "reference": {
+                "resource": "self",
+                "fields": "id"
+            }
+        }
+    ]
 }

@@ -7,8 +7,9 @@ from __future__ import unicode_literals
 import six
 from jsontableschema.model import SchemaModel
 from sqlalchemy import (
-        Table, Column, MetaData, PrimaryKeyConstraint,
-        Text, Integer, Float, Boolean)
+        Table, Column, MetaData,
+        Text, Integer, Float, Boolean,
+        PrimaryKeyConstraint, ForeignKeyConstraint)
 
 
 # Module API
@@ -98,7 +99,7 @@ class Storage(object):
 
             # Define table
             table = _convert_table(table, self.__prefix)
-            columns, constraints = _convert_schema(schema)
+            columns, constraints = _convert_schema(table, schema)
             Table(table, self.__metadata, *(columns+constraints))
 
         # Create tables, update metadata
@@ -173,7 +174,6 @@ class Storage(object):
     def write(self, table, data):
         """Write data to table.
         """
-
         # Process data
         schema = self.describe(table)
         model = SchemaModel(schema)
@@ -217,7 +217,7 @@ def _restore_table(table, prefix):
     return table.replace(prefix, '', 1)
 
 
-def _convert_schema(schema):
+def _convert_schema(table, schema):
     """Convert JSONTableSchema schema to SQLAlchemy columns and constraints.
     """
 
@@ -240,7 +240,8 @@ def _convert_schema(schema):
         except KeyError:
             message = 'Type %s is not supported' % field['type']
             raise TypeError(message)
-        column = Column(field['name'], column_type)
+        nullable = not field.get('constraints', {}).get('required', True)
+        column = Column(field['name'], column_type, nullable=nullable)
         columns.append(column)
 
     # Primary key
@@ -251,10 +252,22 @@ def _convert_schema(schema):
         constraint = PrimaryKeyConstraint(*pk)
         constraints.append(constraint)
 
-    # Foreign key
+    # Foreign keys
     fks = schema.get('foreignKeys', [])
     for fk in fks:
-        pass
+        fields = fk['fields']
+        if isinstance(fields, six.string_types):
+            fields = [fields]
+        resource = fk['reference']['resource']
+        references = fk['reference']['fields']
+        if isinstance(references, six.string_types):
+            references = [references]
+        if resource == 'self':
+            resource = table
+        joiner = lambda reference: '.'.join([resource, reference])  # noqa
+        references = list(map(joiner, references))
+        constraint = ForeignKeyConstraint(fields, references)
+        constraints.append(constraint)
 
     return (columns, constraints)
 

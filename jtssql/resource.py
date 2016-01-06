@@ -48,7 +48,6 @@ def import_resource(storage, table, schema, data, force=False):
 
     # Write data to table
     with topen(data, with_headers=True) as data:
-        data.add_processor(processors.Schema(schema))
         storage.write(table, data)
 
 

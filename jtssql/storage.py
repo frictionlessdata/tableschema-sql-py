@@ -150,7 +150,8 @@ class Storage(object):
 
         # Get schema
         dbtable = self.__get_dbtable(table)
-        schema = _restore_schema(dbtable.columns, dbtable.constraints)
+        table = _convert_table(table, self.__prefix)
+        schema = _restore_schema(table, dbtable.columns, dbtable.constraints)
 
         return schema
 
@@ -273,7 +274,7 @@ def _convert_schema(table, schema):
     return (columns, constraints)
 
 
-def _restore_schema(columns, constraints):
+def _restore_schema(table, columns, constraints):  # noqa
     """Convert SQLAlchemy columns and constraints to JSONTableSchema schema.
     """
 
@@ -312,5 +313,23 @@ def _restore_schema(columns, constraints):
         if len(pk) == 1:
             pk = pk.pop()
         schema['primaryKey'] = pk
+
+    # Foreign keys
+    fks = []
+    for constraint in constraints:
+        if isinstance(constraint, ForeignKeyConstraint):
+            fields = constraint.column_keys
+            if len(fields) == 1:
+                fields = fields.pop()
+            fk = {
+                'fields': fields,
+                'reference': {
+                    'resource': 'stub',
+                    'fields': 'stub',
+                }
+            }
+            fks.append(fk)
+    if len(fks) > 0:
+        schema['foreignKeys'] = fks
 
     return schema

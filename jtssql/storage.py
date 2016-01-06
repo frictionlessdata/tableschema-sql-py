@@ -296,6 +296,8 @@ def _restore_schema(columns, constraints):
             message = 'Type %s is not supported' % column.type
             raise TypeError(message)
         field = {'name': column.name, 'type': field_type}
+        if column.nullable:
+            field['constraints'] = {'required': False}
         fields.append(field)
     schema['fields'] = fields
 

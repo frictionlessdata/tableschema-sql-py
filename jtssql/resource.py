@@ -34,9 +34,7 @@ def import_resource(storage, table, schema, data, force=False):
     """
 
     # Get schema
-    if isinstance(schema, six.string_types):
-        with io.open(schema, encoding='utf-8') as file:
-            schema = json.load(file)
+    schema = SchemaModel(schema).as_python
 
     # Create table
     if storage.check(table):

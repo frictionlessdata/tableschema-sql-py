@@ -15,7 +15,7 @@ from jsontableschema.model import SchemaModel
 
 # Module API
 
-def import_resource(storage, table, schema, data, force=False):
+def import_resource(storage, table, schema, data):
     """Import JSONTableSchema resource to storage's table.
 
     Parameters
@@ -24,27 +24,21 @@ def import_resource(storage, table, schema, data, force=False):
         Storage object.
     table: str
         Table name.
-    schema: dict/str
-        jSONTableSchema dict or path to schema file.
+    schema: str
+        Path to schema file.
     data: str
         Path to data file.
-    force: bool
-        Force table rewriting If it already exists.
 
     """
 
-    # Get schema
-    schema = SchemaModel(schema).as_python
-
     # Create table
+    model = SchemaModel(schema)
+    schema = model.as_python
     if storage.check(table):
-        if not force:
-            message = 'Table %s already exists' % table
-            raise RuntimeError(message)
         storage.delete(table)
     storage.create(table, schema)
 
-    # Write data to table
+    # Write data
     with topen(data, with_headers=True) as data:
         storage.write(table, data)
 
@@ -58,26 +52,22 @@ def export_resource(storage, table, schema, data):
         Storage object.
     table: str
         Table name.
-    schema: dict/str
-        Dict to store schema or path to schema file.
+    schema: str
+        Path to schema file.
     data: str
         Path to data file.
 
     """
 
-    # Update schema dict
-    if not isinstance(schema, six.string_types):
-        schema.update(storage.describe(table))
-    # Write schema on disk
-    else:
-        _ensure_dir(schema)
-        with io.open(schema,
-                     mode=_write_mode,
-                     encoding=_write_encoding) as file:
-            schema = storage.describe(table)
-            json.dump(schema, file, indent=4)
+    # Save schema
+    _ensure_dir(schema)
+    with io.open(schema,
+                 mode=_write_mode,
+                 encoding=_write_encoding) as file:
+        schema = storage.describe(table)
+        json.dump(schema, file, indent=4)
 
-    # Write data on disk
+    # Save data
     _ensure_dir(data)
     with io.open(data,
                  mode=_write_mode,

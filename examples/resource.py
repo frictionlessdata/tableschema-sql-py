@@ -32,8 +32,7 @@ def run(import_schema='examples/data/spending/schema.json',
             storage=storage,
             table=table,
             schema=import_schema,
-            data=import_data,
-            force=True)
+            data=import_data)
     print('imported')
 
     # Export

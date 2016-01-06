@@ -45,12 +45,24 @@ class Test_export_resource(unittest.TestCase):
 
     def setUp(self):
         self.addCleanup(patch.stopall)
+        self.csv = patch.object(module, 'csv').start()
+        self.json = patch.object(module, 'json').start()
+        self.open = patch.object(module.io, 'open').start()
         self.ensure_dir = patch.object(module, '_ensure_dir').start()
         self.SchemaModel = patch.object(module, 'SchemaModel').start()
         self.storage = MagicMock()
 
     # Tests
 
-    @unittest.skip('write')
     def test(self):
-        pass
+
+        # Call function
+        module.export_resource(self.storage, 'table', 'schema', 'data')
+
+        # Assert calls
+        self.ensure_dir.assert_has_calls([call('schema'), call('data')])
+        self.open.assert_has_calls([
+            call('schema', mode=ANY, encoding=ANY),
+            call('data', mode=ANY, encoding=ANY, newline=ANY)], any_order=True)
+        self.storage.describe.assert_called_with('table')
+        self.storage.read.assert_called_with('table')

@@ -17,7 +17,7 @@ from examples import base
 from examples import spending
 
 
-class TestResource(unittest.TestCase):
+class TestStorage(unittest.TestCase):
 
     # Tests
 

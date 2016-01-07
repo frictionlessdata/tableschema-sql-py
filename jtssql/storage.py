@@ -361,16 +361,25 @@ def _restore_schema(table, columns, constraints):  # noqa
     fks = []
     for constraint in constraints:
         if isinstance(constraint, ForeignKeyConstraint):
-            fields = constraint.column_keys
-            if len(fields) == 1:
+            fields = []
+            references = []
+            resource = 'self'
+            for element in constraint.elements:
+                fields.append(element.parent.name)
+                references.append(element.column.name)
+                if element.column.table.name != table:
+                    resource = element.column.table.name
+            if len(fields) == len(references) == 1:
                 fields = fields.pop()
+                references = references.pop()
             fk = {
                 'fields': fields,
                 'reference': {
-                    'resource': 'stub',
-                    'fields': 'stub',
+                    'resource': resource,
+                    'fields': references,
                 }
             }
+            print(fk)
             fks.append(fk)
     if len(fks) > 0:
         schema['foreignKeys'] = fks

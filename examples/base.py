@@ -35,6 +35,6 @@ def run(url, prefix, table, schema, data):
     schema = storage.describe(table)
 
     # Read data from table
-    data = storage.read(table)
+    data = list(storage.read(table))
 
     return tables, schema, data

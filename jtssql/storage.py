@@ -164,15 +164,12 @@ class Storage(object):
         dbtable = self.__get_dbtable(table)
         result = dbtable.select().execute()
 
-        # Get data
-        data = []
+        # Yield data
         schema = self.describe(table)
         model = SchemaModel(schema)
         for row in result:
             row = tuple(model.convert_row(*row))
-            data.append(row)
-
-        return data
+            yield row
 
     def write(self, table, data):
         """Write data to table.

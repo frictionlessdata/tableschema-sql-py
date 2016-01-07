@@ -177,6 +177,7 @@ class Storage(object):
     def write(self, table, data):
         """Write data to table.
         """
+
         # Process data
         schema = self.describe(table)
         model = SchemaModel(schema)

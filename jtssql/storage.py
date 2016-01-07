@@ -51,7 +51,8 @@ class Storage(object):
         for dbtable in self.__metadata.sorted_tables:
             table = dbtable.name
             table = _restore_table(table, self.__prefix)
-            tables.append(table)
+            if table is not None:
+                tables.append(table)
 
         return tables
 
@@ -216,7 +217,9 @@ def _convert_table(table, prefix):
 def _restore_table(table, prefix):
     """Restore database table name to high-level name.
     """
-    return table.replace(prefix, '', 1)
+    if table.startswith(prefix):
+        return table.replace(prefix, '', 1)
+    return None
 
 
 def _convert_schema(table, schema):

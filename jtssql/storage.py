@@ -62,7 +62,7 @@ class Storage(object):
         tables = []
         for dbtable in self.__metadata.sorted_tables:
             table = dbtable.name
-            table = _restore_table(table, self.__prefix)
+            table = _restore_table(self.__prefix, table)
             if table is not None:
                 tables.append(table)
 
@@ -111,8 +111,9 @@ class Storage(object):
                 raise RuntimeError(message)
 
             # Define table
-            table = _convert_table(table, self.__prefix)
-            columns, constraints = _convert_schema(table, schema)
+            table = _convert_table(self.__prefix, table)
+            columns, constraints = _convert_schema(
+                    self.__prefix, table, schema)
             Table(table, self.__metadata, *(columns+constraints))
 
         # Create tables, update metadata
@@ -174,8 +175,9 @@ class Storage(object):
 
         # Get schema
         dbtable = self.__get_dbtable(table)
-        table = _convert_table(table, self.__prefix)
-        schema = _restore_schema(table, dbtable.columns, dbtable.constraints)
+        table = _convert_table(self.__prefix, table)
+        schema = _restore_schema(
+                self.__prefix, table, dbtable.columns, dbtable.constraints)
 
         return schema
 
@@ -239,7 +241,7 @@ class Storage(object):
         """
 
         # Prepare dict key
-        key = _convert_table(table, self.__prefix)
+        key = _convert_table(self.__prefix, table)
         if self.__dbschema:
             key = '.'.join(self.__dbschema, key)
 
@@ -248,13 +250,13 @@ class Storage(object):
 
 # Internal
 
-def _convert_table(table, prefix):
+def _convert_table(prefix, table):
     """Convert high-level table name to database name.
     """
     return prefix + table
 
 
-def _restore_table(table, prefix):
+def _restore_table(prefix, table):
     """Restore database table name to high-level name.
     """
     if table.startswith(prefix):
@@ -262,7 +264,7 @@ def _restore_table(table, prefix):
     return None
 
 
-def _convert_schema(table, schema):
+def _convert_schema(prefix, table, schema):
     """Convert JSONTableSchema schema to SQLAlchemy columns and constraints.
     """
 
@@ -309,6 +311,8 @@ def _convert_schema(table, schema):
             references = [references]
         if resource == 'self':
             resource = table
+        else:
+            resource = _convert_table(prefix, resource)
         joiner = lambda reference: '.'.join([resource, reference])  # noqa
         references = list(map(joiner, references))
         constraint = ForeignKeyConstraint(fields, references)
@@ -317,7 +321,7 @@ def _convert_schema(table, schema):
     return (columns, constraints)
 
 
-def _restore_schema(table, columns, constraints):  # noqa
+def _restore_schema(prefix, table, columns, constraints):  # noqa
     """Convert SQLAlchemy columns and constraints to JSONTableSchema schema.
     """
 
@@ -368,7 +372,8 @@ def _restore_schema(table, columns, constraints):  # noqa
                 fields.append(element.parent.name)
                 references.append(element.column.name)
                 if element.column.table.name != table:
-                    resource = element.column.table.name
+                    resource = _restore_table(
+                            prefix, element.column.table.name)
             if len(fields) == len(references) == 1:
                 fields = fields.pop()
                 references = references.pop()

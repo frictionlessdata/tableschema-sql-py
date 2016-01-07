@@ -30,6 +30,5 @@ class TestStorage(unittest.TestCase):
 
         # Assert values
         assert spending.table in tables
-        # TODO: return assertions
-        # assert schema == [spending.schema]
-        # assert data == [spending.data]
+        # assert schema == spending.schema
+        assert data == spending.data

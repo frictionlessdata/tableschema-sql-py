@@ -15,6 +15,18 @@ from sqlalchemy import (
 # Module API
 
 class Storage(object):
+    """SQL Tabular Storage.
+
+    Parameters
+    ----------
+    engine: object
+        SQLAlchemy engine.
+    dbschema: str
+        Database schema name.
+    prefix: str
+        Prefix for all tables.
+
+    """
 
     # Public
 
@@ -73,7 +85,7 @@ class Storage(object):
         table: str/list
             Table name or list of table names.
         schema: dict/list
-            JSONTableSchema descriptor or list of them.
+            JSONTableSchema schema or list of schemas.
 
         Raises
         ------
@@ -118,7 +130,7 @@ class Storage(object):
         Raises
         ------
         RuntimeError
-            If table is not existent.
+            If table doesn't exist.
 
         """
 
@@ -146,7 +158,18 @@ class Storage(object):
         self.__metadata.reflect()
 
     def describe(self, table):
-        """Return table's JSONTableSchema descriptor.
+        """Return table's JSONTableSchema schema.
+
+        Parameters
+        ----------
+        table: str
+            Table name.
+
+        Returns
+        -------
+        dict
+            JSONTableSchema schema.
+
         """
 
         # Get schema
@@ -157,7 +180,18 @@ class Storage(object):
         return schema
 
     def read(self, table):
-        """Return table's data.
+        """Read data from table.
+
+        Parameters
+        ----------
+        table: str
+            Table name.
+
+        Returns
+        -------
+        generator
+            Data tuples generator.
+
         """
 
         # Get result
@@ -173,6 +207,14 @@ class Storage(object):
 
     def write(self, table, data):
         """Write data to table.
+
+        Parameters
+        ----------
+        table: str
+            Table name.
+        data: list
+            List of data tuples.
+
         """
 
         # Process data

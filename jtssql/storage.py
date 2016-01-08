@@ -102,15 +102,14 @@ class Storage(object):
         if isinstance(schema, dict):
             schemas = [schema]
 
-        # Iterate over tables/schemas
-        for table, schema in zip(tables, schemas):
-
-            # Check not existent
+        # Check tables for existence
+        for table in tables:
             if self.check(table):
                 message = 'Table "%s" already exists.' % table
                 raise RuntimeError(message)
 
-            # Define table
+        # Define tables
+        for table, schema in zip(tables, schemas):
             table = _convert_table(self.__prefix, table)
             columns, constraints = _convert_schema(
                     self.__prefix, table, schema)

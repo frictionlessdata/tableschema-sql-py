@@ -264,7 +264,7 @@ def _restore_table(prefix, table):
     return None
 
 
-def _convert_schema(prefix, table, schema):
+def _convert_schema(prefix, table, schema):  # noqa
     """Convert JSONTableSchema schema to SQLAlchemy columns and constraints.
     """
 
@@ -305,14 +305,19 @@ def _convert_schema(prefix, table, schema):
         fields = fk['fields']
         if isinstance(fields, six.string_types):
             fields = [fields]
-        resource = fk['reference']['resource']
-        references = fk['reference']['fields']
-        if isinstance(references, six.string_types):
-            references = [references]
-        if resource == 'self':
+        resource = fk['reference'].get('table', None)
+        if resource is None:
+            if fk['reference']['resource'] != 'self':
+                message = (
+                    'Supported only self references or references'
+                    'with prepopulated table property')
+                raise ValueError(message)
             resource = table
         else:
             resource = _convert_table(prefix, resource)
+        references = fk['reference']['fields']
+        if isinstance(references, six.string_types):
+            references = [references]
         joiner = lambda reference: '.'.join([resource, reference])  # noqa
         references = list(map(joiner, references))
         constraint = ForeignKeyConstraint(fields, references)

@@ -305,16 +305,14 @@ def _convert_schema(prefix, table, schema):  # noqa
         fields = fk['fields']
         if isinstance(fields, six.string_types):
             fields = [fields]
-        resource = fk['reference'].get('table', None)
-        if resource is None:
-            if fk['reference']['resource'] != 'self':
-                message = (
-                    'Supported only self references or references'
-                    'with prepopulated table property')
-                raise ValueError(message)
+        resource = fk['reference']['resource']
+        if resource == 'self':
             resource = table
+        elif resource == '<table>':
+            resource = _convert_table(prefix, fk['reference']['table'])
         else:
-            resource = _convert_table(prefix, resource)
+            message = 'Supported only "self" and "<table>" references.'
+            raise ValueError(message)
         references = fk['reference']['fields']
         if isinstance(references, six.string_types):
             references = [references]
@@ -371,13 +369,16 @@ def _restore_schema(prefix, table, columns, constraints):  # noqa
     for constraint in constraints:
         if isinstance(constraint, ForeignKeyConstraint):
             fields = []
+            reftable = None
+            resource = None
             references = []
-            resource = 'self'
             for element in constraint.elements:
                 fields.append(element.parent.name)
                 references.append(element.column.name)
-                if element.column.table.name != table:
-                    resource = _restore_table(
+                if element.column.table.name == table:
+                    resource = 'self'
+                else:
+                    reftable = _restore_table(
                             prefix, element.column.table.name)
             if len(fields) == len(references) == 1:
                 fields = fields.pop()
@@ -385,11 +386,14 @@ def _restore_schema(prefix, table, columns, constraints):  # noqa
             fk = {
                 'fields': fields,
                 'reference': {
-                    'resource': resource,
                     'fields': references,
                 }
             }
-            print(fk)
+            if resource is not None:
+                fk['reference']['resource'] = resource
+            if reftable is not None:
+                fk['reference']['resource'] = '<table>'
+                fk['reference']['table'] = reftable
             fks.append(fk)
     if len(fks) > 0:
         schema['foreignKeys'] = fks

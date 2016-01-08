@@ -13,8 +13,8 @@ from examples.base import run
 
 # Fixtures
 url = 'sqlite:///:memory:'
-prefix = 'test_'
-table = 'test'
+prefix = 'spending_'
+table = 'data'
 schema = {
     'fields': [
         {

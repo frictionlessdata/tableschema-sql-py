@@ -14,6 +14,10 @@ env:
   global:
     - TOXENV="py${PYTHON_VERSION//./}"
 
+branches:
+  only:
+    - update
+
 before_install:
   - openssl aes-256-cbc -K $encrypted_f6621a710d15_key -iv $encrypted_f6621a710d15_iv -in .credentials.json.enc -out .credentials.json -d
 

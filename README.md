@@ -1,7 +1,7 @@
 # jsontableschema-sql-py
 
 [![Travis](https://img.shields.io/travis/okfn/jsontableschema-sql-py/update.svg)](https://travis-ci.org/okfn/jsontableschema-sql-py)
-[![Coveralls](http://img.shields.io/coveralls/okfn/jsontableschema-sql-py.svg?branch=update)](https://coveralls.io/r/okfn/jsontableschema-sql-py?branch=update)
+[![Coveralls](http://img.shields.io/coveralls/okfn/jsontableschema-sql-py/update.svg)](https://coveralls.io/r/okfn/jsontableschema-sql-py?branch=update)
 
 Generate and load SQL tables based on JSON Table Schema descriptors.
 

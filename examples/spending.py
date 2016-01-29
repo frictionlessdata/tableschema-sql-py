@@ -20,6 +20,9 @@ schema = {
         {
             'name': 'id',
             'type': 'string',
+            'constraints': {
+                'required': True
+            },
         },
         {
             'name': 'parent',

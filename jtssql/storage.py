@@ -286,7 +286,7 @@ def _convert_schema(prefix, table, schema):  # noqa
         except KeyError:
             message = 'Type %s is not supported' % field['type']
             raise TypeError(message)
-        nullable = not field.get('constraints', {}).get('required', True)
+        nullable = not field.get('constraints', {}).get('required', False)
         column = Column(field['name'], column_type, nullable=nullable)
         columns.append(column)
 
@@ -347,8 +347,8 @@ def _restore_schema(prefix, table, columns, constraints):  # noqa
             message = 'Type %s is not supported' % column.type
             raise TypeError(message)
         field = {'name': column.name, 'type': field_type}
-        if column.nullable:
-            field['constraints'] = {'required': False}
+        if not column.nullable:
+            field['constraints'] = {'required': True}
         fields.append(field)
     schema['fields'] = fields
 

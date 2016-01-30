@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
+import jsontableschema
 from jsontableschema.model import SchemaModel
 from sqlalchemy import (
         Table, Column, MetaData,
@@ -111,6 +112,7 @@ class Storage(object):
         # Define tables
         for table, schema in zip(tables, schemas):
             table = _convert_table(self.__prefix, table)
+            jsontableschema.validate(schema)
             columns, constraints = _convert_schema(
                     self.__prefix, table, schema)
             Table(table, self.__metadata, *(columns+constraints))

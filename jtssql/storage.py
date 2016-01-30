@@ -7,10 +7,9 @@ from __future__ import unicode_literals
 import six
 import jsontableschema
 from jsontableschema.model import SchemaModel
-from sqlalchemy import (
-        Table, Column, MetaData,
-        Text, Integer, Float, Boolean,
-        PrimaryKeyConstraint, ForeignKeyConstraint)
+from sqlalchemy import Table, MetaData
+
+from . import helpers
 
 
 # Module API
@@ -63,7 +62,7 @@ class Storage(object):
         tables = []
         for dbtable in self.__metadata.sorted_tables:
             table = dbtable.name
-            table = _restore_table(self.__prefix, table)
+            table = helpers.restore_table(self.__prefix, table)
             if table is not None:
                 tables.append(table)
 
@@ -111,9 +110,9 @@ class Storage(object):
 
         # Define tables
         for table, schema in zip(tables, schemas):
-            table = _convert_table(self.__prefix, table)
+            table = helpers.convert_table(self.__prefix, table)
             jsontableschema.validate(schema)
-            columns, constraints = _convert_schema(
+            columns, constraints = helpers.convert_schema(
                     self.__prefix, table, schema)
             Table(table, self.__metadata, *(columns+constraints))
 
@@ -176,8 +175,8 @@ class Storage(object):
 
         # Get schema
         dbtable = self.__get_dbtable(table)
-        table = _convert_table(self.__prefix, table)
-        schema = _restore_schema(
+        table = helpers.convert_table(self.__prefix, table)
+        schema = helpers.restore_schema(
                 self.__prefix, table, dbtable.columns, dbtable.constraints)
 
         return schema
@@ -242,161 +241,8 @@ class Storage(object):
         """
 
         # Prepare dict key
-        key = _convert_table(self.__prefix, table)
+        key = helpers.convert_table(self.__prefix, table)
         if self.__dbschema:
             key = '.'.join(self.__dbschema, key)
 
         return self.__metadata.tables[key]
-
-
-# Internal
-
-def _convert_table(prefix, table):
-    """Convert high-level table name to database name.
-    """
-    return prefix + table
-
-
-def _restore_table(prefix, table):
-    """Restore database table name to high-level name.
-    """
-    if table.startswith(prefix):
-        return table.replace(prefix, '', 1)
-    return None
-
-
-def _convert_schema(prefix, table, schema):  # noqa
-    """Convert JSONTableSchema schema to SQLAlchemy columns and constraints.
-    """
-
-    # Init
-    columns = []
-    constraints = []
-
-    # Mapping
-    mapping = {
-        'string': Text(),
-        'integer': Integer(),
-        'number': Float(),
-        'boolean': Boolean(),
-    }
-
-    # Fields
-    for field in schema['fields']:
-        try:
-            column_type = mapping[field['type']]
-        except KeyError:
-            message = 'Type %s is not supported' % field['type']
-            raise TypeError(message)
-        nullable = not field.get('constraints', {}).get('required', True)
-        column = Column(field['name'], column_type, nullable=nullable)
-        columns.append(column)
-
-    # Primary key
-    pk = schema.get('primaryKey', None)
-    if pk is not None:
-        if isinstance(pk, six.string_types):
-            pk = [pk]
-        constraint = PrimaryKeyConstraint(*pk)
-        constraints.append(constraint)
-
-    # Foreign keys
-    fks = schema.get('foreignKeys', [])
-    for fk in fks:
-        fields = fk['fields']
-        if isinstance(fields, six.string_types):
-            fields = [fields]
-        resource = fk['reference']['resource']
-        if resource == 'self':
-            resource = table
-        elif resource == '<table>':
-            resource = _convert_table(prefix, fk['reference']['table'])
-        else:
-            message = 'Supported only "self" and "<table>" references.'
-            raise ValueError(message)
-        references = fk['reference']['fields']
-        if isinstance(references, six.string_types):
-            references = [references]
-        joiner = lambda reference: '.'.join([resource, reference])  # noqa
-        references = list(map(joiner, references))
-        constraint = ForeignKeyConstraint(fields, references)
-        constraints.append(constraint)
-
-    return (columns, constraints)
-
-
-def _restore_schema(prefix, table, columns, constraints):  # noqa
-    """Convert SQLAlchemy columns and constraints to JSONTableSchema schema.
-    """
-
-    # Init
-    schema = {}
-
-    # Mapping
-    mapping = {
-        Text: 'string',
-        Integer: 'integer',
-        Float: 'number',
-        Boolean: 'boolean',
-    }
-
-    # Fields
-    fields = []
-    for column in columns:
-        try:
-            field_type = mapping[column.type.__class__]
-        except KeyError:
-            message = 'Type %s is not supported' % column.type
-            raise TypeError(message)
-        field = {'name': column.name, 'type': field_type}
-        if column.nullable:
-            field['constraints'] = {'required': False}
-        fields.append(field)
-    schema['fields'] = fields
-
-    # Primary key
-    pk = []
-    for constraint in constraints:
-        if isinstance(constraint, PrimaryKeyConstraint):
-            for column in constraint.columns:
-                pk.append(column.name)
-    if len(pk) > 0:
-        if len(pk) == 1:
-            pk = pk.pop()
-        schema['primaryKey'] = pk
-
-    # Foreign keys
-    fks = []
-    for constraint in constraints:
-        if isinstance(constraint, ForeignKeyConstraint):
-            fields = []
-            reftable = None
-            resource = None
-            references = []
-            for element in constraint.elements:
-                fields.append(element.parent.name)
-                references.append(element.column.name)
-                if element.column.table.name == table:
-                    resource = 'self'
-                else:
-                    reftable = _restore_table(
-                            prefix, element.column.table.name)
-            if len(fields) == len(references) == 1:
-                fields = fields.pop()
-                references = references.pop()
-            fk = {
-                'fields': fields,
-                'reference': {
-                    'fields': references,
-                }
-            }
-            if resource is not None:
-                fk['reference']['resource'] = resource
-            if reftable is not None:
-                fk['reference']['resource'] = '<table>'
-                fk['reference']['table'] = reftable
-            fks.append(fk)
-    if len(fks) > 0:
-        schema['foreignKeys'] = fks
-
-    return schema

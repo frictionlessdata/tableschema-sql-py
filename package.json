@@ -25,11 +25,9 @@
   ],
 
   "scripts": {
-    "check": "python run.py review && python run.py test",
     "install": "pip install --upgrade -r requirements.dev.txt",
     "report": "coveralls",
-    "review": "pylama jtssql",
-    "test": "PACKAGE=jtssql tox"
+    "test": "pylama jtssql && PACKAGE=jtssql tox"
   }
 
 }

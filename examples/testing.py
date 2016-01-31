@@ -13,13 +13,16 @@ from examples.base import run
 
 # Fixtures
 url = 'sqlite:///:memory:'
-prefix = 'spending_'
+prefix = 'testing_'
 table = 'data'
 schema = {
     'fields': [
         {
             'name': 'id',
             'type': 'string',
+            'constraints': {
+                'required': True,
+            }
         },
         {
             'name': 'parent',

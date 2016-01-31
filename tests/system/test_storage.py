@@ -14,21 +14,21 @@ import tempfile
 import unittest
 
 from examples import base
-from examples import spending
+from examples import testing
 
 
 class TestStorage(unittest.TestCase):
 
     # Tests
 
-    def test_spending(self):
+    def test_testing(self):
 
         # Run function
         tables, schema, data = base.run(
-                spending.url, spending.prefix, spending.table,
-                spending.schema, spending.data)
+                testing.url, testing.prefix, testing.table,
+                testing.schema, testing.data)
 
         # Assert values
-        assert spending.table in tables
-        assert schema == spending.schema
-        assert data == spending.data
+        assert testing.table in tables
+        assert schema == testing.schema
+        assert data == testing.data

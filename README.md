@@ -5,40 +5,30 @@
 
 Generate and load SQL tables based on JSON Table Schema descriptors.
 
-## Import/Export
-
-> See section below how to get tabular storage object.
-
-High-level API is easy to use.
-
-Having `schema.json` (JSONTableSchema) and `data.csv` in
-current directory we can import it to the sql database:
-
-```python
-import jtssql
-
-jtssql.import_resource(<storage>, 'table', 'schema.json', 'data.csv')
-```
-
-Also we can export it from sql database:
-
-```python
-import jtssql
-
-jtssql.export_resource(<storage>, 'table', 'schema.json', 'data.csv')
-```
-
 ## Tabular Storage
 
-SQLAlchemy is used as sql wrapper.
-We can get storage this way:
+Package implements [Tabular Storage](https://github.com/okfn/datapackage-storage-py#tabular-storage) interface.
+
+SQLAlchemy is used as sql wrapper. We can get storage this way:
 
 ```python
 import jtssql
 from sqlalchemy import create_engine
 
-engine = create_engine('sqlite:///:memory:')
+engine = create_engine('sqlite:///:memory:', prefix='prefix')
 storage = jtssql.Storage(engine)
+```
+
+Then we could interact with storage:
+
+```python
+storage.tables
+storage.check('table_name') # check existence
+storage.create('table_name', shema)
+storage.delete('table_name')
+storage.describe('table_name') # return schema
+storage.read('table_name') # return data
+storage.write('table_name', data)
 ```
 
 ## Mappings
@@ -55,5 +45,4 @@ SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
 ## Documentation
 
 API documentation is presented as docstings:
-- [import/export](https://github.com/okfn/jsontableschema-sql-py/blob/master/jtssql/resource.py)
 - [Storage](https://github.com/okfn/jsontableschema-sql-py/blob/master/jtssql/storage.py)

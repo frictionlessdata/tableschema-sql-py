@@ -1,4 +1,0 @@
-six
-sqlalchemy
-jsontableschema
-git+git://github.com/okfn/tabulator-py.git

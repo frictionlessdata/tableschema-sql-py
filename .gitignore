@@ -56,14 +56,5 @@ docs/_build/
 # PyBuilder
 target/
 
-# Virtualenv
-venv/
-venv2/
-venv3/
-
-# Tmux
-.tmuxp.yml
-
 # Project
-.credentials.json
 tmp/

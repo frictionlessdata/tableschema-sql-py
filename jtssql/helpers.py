@@ -105,8 +105,9 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
     fields = []
     for column in columns:
         try:
-            field_type = mapping[column.type.__class__]
-        except KeyError:
+            field_type = [value for col_type, value in mapping.items()
+                          if isinstance(column.type, col_type)][0]
+        except IndexError:
             message = 'Type %s is not supported' % column.type
             raise TypeError(message)
         field = {'name': column.name, 'type': field_type}

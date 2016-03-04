@@ -46,3 +46,11 @@ SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
 
 API documentation is presented as docstings:
 - [Storage](https://github.com/okfn/jsontableschema-sql-py/blob/master/jtssql/storage.py)
+
+## Contributing
+
+Please read the contribution guideline:
+
+[How to Contribute](CONTRIBUTING.md)
+
+Thanks!

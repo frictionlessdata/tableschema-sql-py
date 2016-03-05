@@ -12,11 +12,11 @@ Package implements [Tabular Storage](https://github.com/okfn/datapackage-storage
 SQLAlchemy is used as sql wrapper. We can get storage this way:
 
 ```python
-import jtssql
 from sqlalchemy import create_engine
+from jsontableschema_sql import Storage
 
 engine = create_engine('sqlite:///:memory:', prefix='prefix')
-storage = jtssql.Storage(engine)
+storage = Storage(engine)
 ```
 
 Then we could interact with storage:
@@ -24,7 +24,7 @@ Then we could interact with storage:
 ```python
 storage.tables
 storage.check('table_name') # check existence
-storage.create('table_name', shema)
+storage.create('table_name', schema)
 storage.delete('table_name')
 storage.describe('table_name') # return schema
 storage.read('table_name') # return data
@@ -45,7 +45,7 @@ SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
 ## Documentation
 
 API documentation is presented as docstings:
-- [Storage](https://github.com/okfn/jsontableschema-sql-py/blob/master/jtssql/storage.py)
+- [Storage](https://github.com/okfn/jsontableschema-sql-py/blob/master/jsontableschema_sql/storage.py)
 
 ## Contributing
 

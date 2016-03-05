@@ -8,7 +8,7 @@ import pytest
 import unittest
 from mock import MagicMock, patch, ANY
 from importlib import import_module
-module = import_module('jtssql.storage')
+module = import_module('jsontableschema_sql.storage')
 
 
 class TestTable(unittest.TestCase):

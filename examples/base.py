@@ -8,14 +8,14 @@ import sys
 from sqlalchemy import create_engine
 
 sys.path.insert(0, '.')
-import jtssql
+from jsontableschema_sql import Storage
 
 
 def run(url, prefix, table, schema, data):
 
     # Storage
     engine = create_engine(url)
-    storage = jtssql.Storage(engine=engine, prefix=prefix)
+    storage = Storage(engine=engine, prefix=prefix)
 
     # Check table
     if storage.check(table):

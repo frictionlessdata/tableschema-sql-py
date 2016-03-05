@@ -18,7 +18,7 @@ def read(*paths):
 
 
 # Prepare
-PACKAGE = 'jtssql'
+PACKAGE = 'jsontableschema_sql'
 INSTALL_REQUIRES = [
     'six',
     'sqlalchemy',

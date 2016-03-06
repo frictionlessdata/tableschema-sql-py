@@ -1,22 +1,28 @@
+.PHONY: all develop list lint release test version
 
-test: install
-	@rm -rf **/*.pyc
-	@pyenv/bin/nosetests --with-coverage --cover-package=jtssql --cover-erase
 
-schema:
-	@pyenv/bin/jtskit infer --to_file=tests/fixtures/countries.csv.json tests/fixtures/countries.csv
-	@pyenv/bin/jtskit infer --to_file=tests/fixtures/sa.csv.json tests/fixtures/sa.csv
+PACKAGE := $(shell grep '^PACKAGE =' setup.py | cut -d "'" -f2)
+VERSION := $(shell head -n 1 $(PACKAGE)/VERSION)
 
-install: pyenv/bin/python
 
-pyenv/bin/python:
-	virtualenv-3.4 pyenv
-	pyenv/bin/pip install --upgrade pip
-	pyenv/bin/pip install wheel nose coverage unicodecsv jtskit typecast
-	pyenv/bin/pip install -e .
+all: list
 
-upload: clean install
-	pyenv/bin/python setup.py sdist bdist_wheel upload
+develop:
+	pip install --upgrade -e .[develop]
 
-clean:
-	rm -rf pyenv
+list:
+	@grep '^\.PHONY' Makefile | cut -d' ' -f2- | tr ' ' '\n'
+
+lint:
+	pylint $(PACKAGE)
+
+release:
+	bash -c '[[ -z `git status -s` ]]'
+	git tag -a -m release $(VERSION)
+	git push --tags
+
+test:
+	tox
+
+version:
+	@echo $(VERSION)

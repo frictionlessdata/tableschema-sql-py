@@ -1,53 +1,56 @@
-# jts-sql [![Build Status](https://travis-ci.org/okfn/jts-sql.svg?branch=master)](https://travis-ci.org/okfn/jts-sql)
+# jsontableschema-sql-py
 
-Generate database tables using SQLAlchemy, based on JSON Table Schema field
-descriptors. You can also load data into a tables based on an iterator.
+[![Travis](https://img.shields.io/travis/okfn/jsontableschema-sql-py/update.svg)](https://travis-ci.org/okfn/jsontableschema-sql-py)
+[![Coveralls](http://img.shields.io/coveralls/okfn/jsontableschema-sql-py/update.svg)](https://coveralls.io/r/okfn/jsontableschema-sql-py?branch=update)
 
-## Usage
+Generate and load SQL tables based on JSON Table Schema descriptors.
 
-Here's an example of using ``jts-sql``:
+## Tabular Storage
+
+Package implements [Tabular Storage](https://github.com/okfn/datapackage-storage-py#tabular-storage) interface.
+
+SQLAlchemy is used as sql wrapper. We can get storage this way:
 
 ```python
 from sqlalchemy import create_engine
-from jtssql import SchemaTable
+from jsontableschema_sql import Storage
 
-# your rows of data - maybe you loaded these from a CSV :-)
-# e.g. data = [ row for row in csv.DictReader(open('mycsv.csv')) ]
-data = [
-    {'foo': 3, 'bar': 'hello'},
-    {'foo': 5, 'bar': 'bye'}
-]
-
-# this is your JSON Table Schema - http://dataprotocols.org/json-table-schema/
-schema = {
-    'fields': [
-        {
-            'name': 'foo',
-            'type': 'integer'
-        },
-        {
-            'name': 'bar',
-            'type': 'string'
-        }
-    ]
-}
-
-engine = create_engine('sqlite://example.db')
-table = SchemaTable(engine, 'foo_table', schema)
-table.create()
-table.load_iter(data)
-
-sqla_table = table.table
-res = engine.execute(sqla_table.select())
-assert data == list(res)
+engine = create_engine('sqlite:///:memory:', prefix='prefix')
+storage = Storage(engine)
 ```
 
-## Tests
+Then we could interact with storage:
 
-The test suite will usually be executed in it's own ``virtualenv`` and perform
-a coverage check as well as the tests. To execute on a system with
-``virtualenv`` and ``make`` installed, type:
-
-```bash
-$ make test
+```python
+storage.tables
+storage.check('table_name') # check existence
+storage.create('table_name', schema)
+storage.delete('table_name')
+storage.describe('table_name') # return schema
+storage.read('table_name') # return data
+storage.write('table_name', data)
 ```
+
+## Mappings
+
+```
+schema.json -> SQL table schema
+data.csv -> SQL talbe data
+```
+
+## Drivers
+
+SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
+
+## Documentation
+
+API documentation is presented as docstings:
+- [Storage](https://github.com/okfn/jsontableschema-sql-py/blob/master/jsontableschema_sql/storage.py)
+
+## Contributing
+
+Please read the contribution guideline:
+
+[How to Contribute](CONTRIBUTING.md)
+
+Thanks!

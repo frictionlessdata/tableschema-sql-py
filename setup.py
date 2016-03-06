@@ -1,43 +1,73 @@
+# -*- coding: utf-8 -*-
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+
+import os
+import io
 from setuptools import setup, find_packages
 
-__version__ = '0.1.1'
 
+# Helpers
+def read(*paths):
+    """Read a text file."""
+    basedir = os.path.dirname(__file__)
+    fullpath = os.path.join(basedir, *paths)
+    contents = io.open(fullpath, encoding='utf-8').read().strip()
+    return contents
+
+
+# Prepare
+PACKAGE = 'jsontableschema_sql'
+INSTALL_REQUIRES = [
+    'six',
+    'sqlalchemy',
+    'jsontableschema',
+    'tabulator',
+]
+LINT_REQUIRES = [
+    'pylint',
+]
+TESTS_REQUIRE = [
+    'tox',
+]
+README = read('README.md')
+VERSION = read(PACKAGE, 'VERSION')
+PACKAGES = find_packages(exclude=['examples', 'tests'])
+
+
+# Run
 setup(
-    name='jtssql',
-    version=__version__,
-    description="Generate database tables based on JSON Table Schema",
-    long_description="",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4'
-    ],
-    keywords='schema jsontableschema jts sql data',
-    author='Friedrich Lindenberg',
-    author_email='friedrich@pudo.org',
-    url='http://github.com/okfn/jtssql',
-    license='MIT',
-    packages=find_packages(exclude=['ez_setup', 'examples', 'test']),
-    namespace_packages=[],
-    package_data={},
+    name=PACKAGE,
+    version=VERSION,
+    packages=PACKAGES,
     include_package_data=True,
+    install_requires=INSTALL_REQUIRES,
+    tests_require=TESTS_REQUIRE,
+    extras_require={'develop': LINT_REQUIRES + TESTS_REQUIRE},
     zip_safe=False,
-    test_suite='nose.collector',
-    install_requires=[
-        'sqlalchemy >= 1.0',
-        'typecast >= 0.2.2',
-        'normality'
+    long_description=README,
+    description='Generate SQL tables, load and extract data, based on JSON Table Schema descriptors.',
+    author='Open Knowledge Foundation',
+    author_email='info@okfn.org',
+    url='https://github.com/okfn/jsontableschema-sql-py',
+    license='MIT',
+    keywords=[
+        'frictionless data',
     ],
-    tests_require=[
-        'nose',
-        'coverage',
-        'wheel',
-        'unicodecsv',
-        'jtskit'
-    ]
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Environment :: Web Environment',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
+        'Topic :: Software Development :: Libraries :: Python Modules'
+    ],
 )

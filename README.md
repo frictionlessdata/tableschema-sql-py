@@ -1,5 +1,6 @@
 # jsontableschema-sql-py
 
+[![Gitter](https://img.shields.io/gitter/room/frictionlessdata/chat.svg)](https://gitter.im/frictionlessdata/chat)
 [![Travis](https://img.shields.io/travis/okfn/jsontableschema-sql-py/update.svg)](https://travis-ci.org/okfn/jsontableschema-sql-py)
 [![Coveralls](http://img.shields.io/coveralls/okfn/jsontableschema-sql-py/update.svg)](https://coveralls.io/r/okfn/jsontableschema-sql-py?branch=update)
 

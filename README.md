@@ -1,7 +1,7 @@
 # jsontableschema-sql-py
 
-[![Travis](https://img.shields.io/travis/frictionlessdata/jsontableschema-sql-py/update.svg)](https://travis-ci.org/frictionlessdata/jsontableschema-sql-py)
-[![Coveralls](http://img.shields.io/coveralls/frictionlessdata/jsontableschema-sql-py/update.svg)](https://coveralls.io/r/frictionlessdata/jsontableschema-sql-py?branch=update)
+[![Travis](https://img.shields.io/travis/frictionlessdata/jsontableschema-sql-py/master.svg)](https://travis-ci.org/frictionlessdata/jsontableschema-sql-py)
+[![Coveralls](http://img.shields.io/coveralls/frictionlessdata/jsontableschema-sql-py/master.svg)](https://coveralls.io/r/frictionlessdata/jsontableschema-sql-py?branch=master)
 [![PyPi](https://img.shields.io/pypi/v/jsontableschema-sql.svg)](https://pypi.python.org/pypi/jsontableschema-sql)
 [![Gitter](https://img.shields.io/gitter/room/frictionlessdata/chat.svg)](https://gitter.im/frictionlessdata/chat)
 

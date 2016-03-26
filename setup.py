@@ -51,7 +51,7 @@ setup(
     description='Generate SQL tables, load and extract data, based on JSON Table Schema descriptors.',
     author='Open Knowledge Foundation',
     author_email='info@okfn.org',
-    url='https://github.com/okfn/jsontableschema-sql-py',
+    url='https://github.com/frictionlessdata/jsontableschema-sql-py',
     license='MIT',
     keywords=[
         'frictionless data',

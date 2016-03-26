@@ -1,8 +1,9 @@
 # jsontableschema-sql-py
 
+[![Travis](https://img.shields.io/travis/frictionlessdata/jsontableschema-sql-py/update.svg)](https://travis-ci.org/frictionlessdata/jsontableschema-sql-py)
+[![Coveralls](http://img.shields.io/coveralls/frictionlessdata/jsontableschema-sql-py/update.svg)](https://coveralls.io/r/frictionlessdata/jsontableschema-sql-py?branch=update)
+[![PyPi](https://img.shields.io/pypi/v/jsontableschema-sql.svg)](https://pypi.python.org/pypi/jsontableschema-sql)
 [![Gitter](https://img.shields.io/gitter/room/frictionlessdata/chat.svg)](https://gitter.im/frictionlessdata/chat)
-[![Travis](https://img.shields.io/travis/okfn/jsontableschema-sql-py/update.svg)](https://travis-ci.org/okfn/jsontableschema-sql-py)
-[![Coveralls](http://img.shields.io/coveralls/okfn/jsontableschema-sql-py/update.svg)](https://coveralls.io/r/okfn/jsontableschema-sql-py?branch=update)
 
 Generate and load SQL tables based on JSON Table Schema descriptors.
 
@@ -46,7 +47,7 @@ SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
 ## Documentation
 
 API documentation is presented as docstings:
-- [Storage](https://github.com/okfn/jsontableschema-sql-py/blob/master/jsontableschema_sql/storage.py)
+- [Storage](https://github.com/frictionlessdata/jsontableschema-sql-py/blob/master/jsontableschema_sql/storage.py)
 
 ## Contributing
 

@@ -19,6 +19,7 @@ def read(*paths):
 
 # Prepare
 PACKAGE = 'jsontableschema_sql'
+NAME = PACKAGE.replace('_', '-')
 INSTALL_REQUIRES = [
     'six',
     'sqlalchemy',
@@ -38,7 +39,7 @@ PACKAGES = find_packages(exclude=['examples', 'tests'])
 
 # Run
 setup(
-    name=PACKAGE,
+    name=NAME,
     version=VERSION,
     packages=PACKAGES,
     include_package_data=True,

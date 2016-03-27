@@ -9,7 +9,7 @@ import jsontableschema
 from jsontableschema.model import SchemaModel
 from sqlalchemy import Table, MetaData
 
-from . import helpers
+from . import mappers
 
 
 # Module API
@@ -62,7 +62,7 @@ class Storage(object):
         tables = []
         for dbtable in self.__metadata.sorted_tables:
             table = dbtable.name
-            table = helpers.restore_table(self.__prefix, table)
+            table = mappers.restore_table(self.__prefix, table)
             if table is not None:
                 tables.append(table)
 
@@ -110,9 +110,9 @@ class Storage(object):
 
         # Define tables
         for table, schema in zip(tables, schemas):
-            table = helpers.convert_table(self.__prefix, table)
+            table = mappers.convert_table(self.__prefix, table)
             jsontableschema.validate(schema)
-            columns, constraints = helpers.convert_schema(
+            columns, constraints = mappers.convert_schema(
                     self.__prefix, table, schema)
             Table(table, self.__metadata, *(columns+constraints))
 
@@ -175,8 +175,8 @@ class Storage(object):
 
         # Get schema
         dbtable = self.__get_dbtable(table)
-        table = helpers.convert_table(self.__prefix, table)
-        schema = helpers.restore_schema(
+        table = mappers.convert_table(self.__prefix, table)
+        schema = mappers.restore_schema(
                 self.__prefix, table, dbtable.columns, dbtable.constraints)
 
         return schema
@@ -241,7 +241,7 @@ class Storage(object):
         """
 
         # Prepare dict key
-        key = helpers.convert_table(self.__prefix, table)
+        key = mappers.convert_table(self.__prefix, table)
         if self.__dbschema:
             key = '.'.join(self.__dbschema, key)
 

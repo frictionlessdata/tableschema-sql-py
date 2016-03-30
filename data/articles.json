@@ -34,9 +34,12 @@
             "type": "number"
         },
         {
-            "name": "created",
+            "name": "crated_date",
             "type": "date"
+        },
+        {
+            "name": "created_time",
+            "type": "time"
         }
-
     ]
 }

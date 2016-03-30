@@ -243,6 +243,8 @@ class Storage(object):
         # Prepare dict key
         key = mappers.convert_table(self.__prefix, table)
         if self.__dbschema:
-            key = '.'.join(self.__dbschema, key)
+            # SQLite doesn't support db schemas concept
+            # like PostgreSQL does. For now we don't test it.
+            key = '.'.join(self.__dbschema, key)  # pragma: no cover
 
         return self.__metadata.tables[key]

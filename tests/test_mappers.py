@@ -5,6 +5,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import pytest
+from mock import Mock
 
 from jsontableschema_sql import mappers
 
@@ -20,10 +21,21 @@ def test_restore_table():
     assert mappers.restore_table('prefix_', 'xxxxxx_table') == None
 
 
-@pytest.mark.skip('write')
-def test_convert_schema():
-    pass
+def test_convert_schema_not_supported_type():
+    with pytest.raises(TypeError):
+        mappers.convert_schema('prefix_', 'table', {
+            'fields': [{'type': 'not_supported'}],
+        })
 
-@pytest.mark.skip('write')
-def test_restore_schema():
-    pass
+
+def test_convert_schema_not_supported_reference():
+    with pytest.raises(ValueError):
+        mappers.convert_schema('prefix_', 'table', {
+            'foreignKeys': [{'fields': '', 'reference': {'resource': 'not_supported'}}],
+            'fields': [],
+        })
+
+
+def test_restore_schema_not_supported_tupe():
+    with pytest.raises(TypeError):
+        mappers.restore_schema('prefix_', 'table', [Mock()], [])

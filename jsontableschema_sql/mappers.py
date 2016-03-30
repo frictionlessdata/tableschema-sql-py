@@ -37,8 +37,8 @@ def convert_schema(prefix, table, schema):  # noqa
     # Mapping
     mapping = {
         'string': Text(),
-        'integer': Integer(),
         'number': Float(),
+        'integer': Integer(),
         'boolean': Boolean(),
         'date': Date(),
     }
@@ -97,8 +97,8 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
     # Mapping
     mapping = {
         Text: 'string',
-        Integer: 'integer',
         Float: 'number',
+        Integer: 'integer',
         Boolean: 'boolean',
         Date: 'date',
     }

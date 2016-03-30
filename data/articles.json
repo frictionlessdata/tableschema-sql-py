@@ -32,6 +32,11 @@
         {
             "name": "rating",
             "type": "number"
+        },
+        {
+            "name": "created",
+            "type": "date"
         }
+
     ]
 }

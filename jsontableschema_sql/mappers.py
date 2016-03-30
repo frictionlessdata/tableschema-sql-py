@@ -36,13 +36,13 @@ def convert_schema(prefix, table, schema):  # noqa
 
     # Mapping
     mapping = {
-        'string': Text(),
-        'number': Float(),
-        'integer': Integer(),
-        'boolean': Boolean(),
-        'date': Date(),
-        'time': Time(),
-        'datetime': DateTime(),
+        'string': Text,
+        'number': Float,
+        'integer': Integer,
+        'boolean': Boolean,
+        'date': Date,
+        'time': Time,
+        'datetime': DateTime,
     }
 
     # Fields
@@ -110,10 +110,11 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
     # Fields
     fields = []
     for column in columns:
-        try:
-            field_type = [value for col_type, value in mapping.items()
-                          if isinstance(column.type, col_type)][0]
-        except IndexError:
+        field_type = None
+        for key, value in mapping.items():
+            if isinstance(column.type, key):
+                field_type = value
+        if field_type is None:
             message = 'Type %s is not supported' % column.type
             raise TypeError(message)
         field = {'name': column.name, 'type': field_type}

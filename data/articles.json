@@ -1,5 +1,14 @@
 {
     "primaryKey": "id",
+    "foreignKeys": [
+        {
+            "fields": "parent",
+            "reference": {
+                "fields": "id",
+                "resource": "self"
+            }
+        }
+    ],
     "fields": [
         {
             "name": "id",
@@ -7,6 +16,10 @@
             "constraints": {
                 "required": true
             }
+        },
+        {
+            "name": "parent",
+            "type": "integer"
         },
         {
             "name": "name",

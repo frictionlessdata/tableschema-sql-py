@@ -24,16 +24,14 @@ def test_restore_table():
 def test_convert_schema_not_supported_type():
     with pytest.raises(TypeError):
         mappers.convert_schema('prefix_', 'table', {
-            'fields': [{'type': 'not_supported'}],
-        })
+            'fields': [{'type': 'not_supported'}]})
 
 
 def test_convert_schema_not_supported_reference():
     with pytest.raises(ValueError):
         mappers.convert_schema('prefix_', 'table', {
             'foreignKeys': [{'fields': '', 'reference': {'resource': 'not_supported'}}],
-            'fields': [],
-        })
+            'fields': []})
 
 
 def test_restore_schema_not_supported_tupe():

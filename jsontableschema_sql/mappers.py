@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 import six
 from sqlalchemy import (
-        Column, Text, Float, Integer, Boolean, Date, Time,
+        Column, Text, Float, Integer, Boolean, Date, Time, DateTime,
         PrimaryKeyConstraint, ForeignKeyConstraint)
 
 
@@ -42,6 +42,7 @@ def convert_schema(prefix, table, schema):  # noqa
         'boolean': Boolean(),
         'date': Date(),
         'time': Time(),
+        'datetime': DateTime(),
     }
 
     # Fields
@@ -103,6 +104,7 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
         Boolean: 'boolean',
         Date: 'date',
         Time: 'time',
+        DateTime: 'datetime',
     }
 
     # Fields

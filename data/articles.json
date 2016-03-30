@@ -40,6 +40,10 @@
         {
             "name": "created_time",
             "type": "time"
+        },
+        {
+            "name": "created_datetime",
+            "type": "datetime"
         }
     ]
 }

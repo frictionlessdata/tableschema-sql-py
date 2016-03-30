@@ -1,2 +1,3 @@
-entry_id,comment
-1,good
+id,entry_id,comment_id,comment
+1,1,,good
+2,1,1,bad

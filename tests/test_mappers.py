@@ -17,6 +17,7 @@ def test_convert_table():
 
 def test_restore_table():
     assert mappers.restore_table('prefix_', 'prefix_table') == 'table'
+    assert mappers.restore_table('prefix_', 'xxxxxx_table') == None
 
 
 @pytest.mark.skip('write')

@@ -1,0 +1,27 @@
+
+{
+    "primaryKey": "entry_id",
+    "foreignKeys": [
+        {
+            "fields": "entry_id",
+            "reference": {
+                "fields": "id",
+                "resource": "<table>",
+                "table": "articles"
+            }
+        }
+    ],
+    "fields": [
+        {
+            "name": "entry_id",
+            "type": "integer",
+            "constraints": {
+                "required": true
+            }
+        },
+        {
+            "name": "comment",
+            "type": "string"
+        }
+    ]
+}

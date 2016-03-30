@@ -10,7 +10,7 @@ from sqlalchemy import (
         PrimaryKeyConstraint, ForeignKeyConstraint)
 
 
-# Internal
+# Module API
 
 def convert_table(prefix, table):
     """Convert high-level table name to database name.

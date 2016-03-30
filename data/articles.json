@@ -1,0 +1,24 @@
+{
+    "primaryKey": "id",
+    "fields": [
+        {
+            "name": "id",
+            "type": "integer",
+            "constraints": {
+                "required": true
+            }
+        },
+        {
+            "name": "name",
+            "type": "string"
+        },
+        {
+            "name": "current",
+            "type": "boolean"
+        },
+        {
+            "name": "rating",
+            "type": "number"
+        }
+    ]
+}

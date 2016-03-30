@@ -1,0 +1,4 @@
+# Activate: source .venv
+virtualenv .python
+source .python/bin/activate
+make install

@@ -201,10 +201,7 @@ class Storage(object):
         result = dbtable.select().execute()
 
         # Yield data
-        schema = self.describe(table)
-        model = SchemaModel(schema)
         for row in result:
-            row = tuple(model.convert_row(*row, fail_fast=True))
             yield row
 
     def write(self, table, data):

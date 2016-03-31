@@ -54,7 +54,8 @@ def convert_schema(prefix, table, schema):  # noqa
         try:
             column_type = mapping[field['type']]
         except KeyError:
-            message = 'Type %s is not supported' % field['type']
+            message = 'Type "%s" of field "%s" is not supported'
+            message = message % (field['type'], field['name'])
             raise TypeError(message)
         nullable = not field.get('constraints', {}).get('required', False)
         column = Column(field['name'], column_type, nullable=nullable)
@@ -123,7 +124,8 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
             if isinstance(column.type, key):
                 field_type = value
         if field_type is None:
-            message = 'Type %s is not supported' % column.type
+            message = 'Type "%s" of column "%s" is not supported'
+            message = message % (column.type, column.name)
             raise TypeError(message)
         field = {'name': column.name, 'type': field_type}
         if not column.nullable:

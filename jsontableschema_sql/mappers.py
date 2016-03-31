@@ -8,7 +8,7 @@ import six
 from sqlalchemy import (
         Column, Text, Float, Integer, Boolean, Date, Time, DateTime,
         PrimaryKeyConstraint, ForeignKeyConstraint)
-from sqlalchemy.dialects.postgres import ARRAY, JSON, JSONB
+from sqlalchemy.dialects.postgres import ARRAY, JSON, JSONB, UUID
 
 
 # Module API
@@ -103,6 +103,7 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
     # Mapping
     mapping = {
         Text: 'string',
+        UUID: 'string',
         Float: 'number',
         Integer: 'integer',
         Boolean: 'boolean',

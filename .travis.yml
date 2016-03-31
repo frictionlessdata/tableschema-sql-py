@@ -1,6 +1,9 @@
 sudo:
   false
 
+services:
+  - postgresql
+
 language:
   python
 

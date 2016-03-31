@@ -54,8 +54,8 @@ def test_storage():
     assert storage.tables == ['articles', 'comments']
 
     # Get table schemas
-    assert storage.describe('articles') == convert_schema(articles_schema)
-    assert storage.describe('comments') == convert_schema(comments_schema)
+    assert storage.describe('articles') == articles_schema
+    assert storage.describe('comments') == comments_schema
 
     # Get table data
     assert list(storage.read('articles')) == convert_data(articles_schema, articles_data)
@@ -71,13 +71,6 @@ def test_storage():
 
 
 # Helpers
-
-def convert_schema(schema):
-    schema = deepcopy(schema)
-    for field in schema['fields']:
-        if field['type'] in ['array', 'geojson']:
-            field['type'] = 'object'
-    return schema
 
 def convert_data(schema, data):
     result = []

@@ -34,7 +34,12 @@
             "type": "number"
         },
         {
-            "name": "crated_date",
+            "name": "created_year",
+            "type": "date",
+            "format": "fmt:%Y"
+        },
+        {
+            "name": "created_date",
             "type": "date"
         },
         {

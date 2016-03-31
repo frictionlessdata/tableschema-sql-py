@@ -38,6 +38,7 @@ class Storage(object):
         self.__engine = engine
         self.__dbschema = dbschema
         self.__prefix = prefix
+        self.__schemas = {}
 
         # Create metadata
         self.__metadata = MetaData(
@@ -112,6 +113,11 @@ class Storage(object):
 
         # Define tables
         for table, schema in zip(tables, schemas):
+
+            # Add to schemas
+            self.__schemas[table] = schema
+
+            # Crate sa table
             table = mappers.convert_table(self.__prefix, table)
             jsontableschema.validate(schema)
             columns, constraints = mappers.convert_schema(
@@ -151,6 +157,10 @@ class Storage(object):
                 message = 'Table "%s" doesn\'t exist.' % self
                 raise RuntimeError(message)
 
+            # Remove from schemas
+            if table in self.__schemas:
+                del self.__schemas[table]
+
             # Add table to dbtables
             dbtable = self.__get_dbtable(table)
             dbtables.append(dbtable)
@@ -176,10 +186,13 @@ class Storage(object):
         """
 
         # Get schema
-        dbtable = self.__get_dbtable(table)
-        table = mappers.convert_table(self.__prefix, table)
-        schema = mappers.restore_schema(
-                self.__prefix, table, dbtable.columns, dbtable.constraints)
+        if table in self.__schemas:
+            schema = self.__schemas[table]
+        else:
+            dbtable = self.__get_dbtable(table)
+            table = mappers.convert_table(self.__prefix, table)
+            schema = mappers.restore_schema(
+                    self.__prefix, table, dbtable.columns, dbtable.constraints)
 
         return schema
 

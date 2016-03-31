@@ -52,6 +52,11 @@
         {
             "name": "persons",
             "type": "array"
+        },
+        {
+            "name": "location",
+            "type": "geojson"
         }
+
     ]
 }

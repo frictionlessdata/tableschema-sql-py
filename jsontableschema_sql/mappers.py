@@ -46,6 +46,7 @@ def convert_schema(prefix, table, schema):  # noqa
         'date': Date,
         'time': Time,
         'datetime': DateTime,
+        'geojson': JSONB,
     }
 
     # Fields

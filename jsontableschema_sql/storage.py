@@ -5,8 +5,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
+import json
 import jsontableschema
 from jsontableschema.model import SchemaModel
+from jsontableschema.exceptions import InvalidObjectType
 from sqlalchemy import Table, MetaData
 
 from . import mappers
@@ -222,9 +224,13 @@ class Storage(object):
         cdata = []
         for row in data:
             rdata = {}
-            row = tuple(model.convert_row(*row, fail_fast=True))
             for index, field in enumerate(model.fields):
-                rdata[field['name']] = row[index]
+                value = row[index]
+                try:
+                    value = model.cast(field['name'], value)
+                except InvalidObjectType as exception:
+                    value = json.loads(value)
+                rdata[field['name']] = value
             cdata.append(rdata)
 
         # Insert data

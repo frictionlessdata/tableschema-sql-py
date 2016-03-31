@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 import six
 import json
 import jsontableschema
-from jsontableschema.storage import Storage
+from jsontableschema import storage as base
 from jsontableschema.model import SchemaModel
 from jsontableschema.exceptions import InvalidObjectType
 from sqlalchemy import Table, MetaData
@@ -17,7 +17,7 @@ from . import mappers
 
 # Module API
 
-class Storage(Storage):
+class Storage(base.Storage):
     """SQL Tabular Storage.
 
     Parameters

@@ -28,8 +28,10 @@ def test_storage():
     articles_data = topen('data/articles.csv', with_headers=True).read()
     comments_data = topen('data/comments.csv', with_headers=True).read()
 
-    # Storage
+    # Engine
     engine = create_engine(os.environ['DATABASE_URL'])
+
+    # Storage
     storage = Storage(engine=engine, prefix='prefix_')
 
     # Delete tables
@@ -43,6 +45,9 @@ def test_storage():
     storage.write('articles', articles_data)
     storage.write('comments', comments_data)
 
+    # Create new storage to use reflection only
+    storage = Storage(engine=engine, prefix='prefix_')
+
     # Create existent table
     with pytest.raises(RuntimeError):
         storage.create('articles', articles_schema)
@@ -54,8 +59,8 @@ def test_storage():
     assert storage.tables == ['articles', 'comments']
 
     # Get table schemas
-    assert storage.describe('articles') == articles_schema
-    assert storage.describe('comments') == comments_schema
+    assert storage.describe('articles') == convert_schema(articles_schema)
+    assert storage.describe('comments') == convert_schema(comments_schema)
 
     # Get table data
     assert list(storage.read('articles')) == convert_data(articles_schema, articles_data)
@@ -71,6 +76,15 @@ def test_storage():
 
 
 # Helpers
+
+def convert_schema(schema):
+    schema = deepcopy(schema)
+    for field in schema['fields']:
+        if field['type'] in ['array', 'geojson']:
+            field['type'] = 'object'
+        if 'format' in field:
+            del field['format']
+    return schema
 
 def convert_data(schema, data):
     result = []

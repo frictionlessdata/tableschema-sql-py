@@ -20,8 +20,10 @@ comments_schema = json.load(io.open('data/comments.json', encoding='utf-8'))
 articles_data = topen('data/articles.csv', with_headers=True).read()
 comments_data = topen('data/comments.csv', with_headers=True).read()
 
-# Storage
+# Engine
 engine = create_engine(os.environ['DATABASE_URL'])
+
+# Storage
 storage = Storage(engine=engine, prefix='prefix_')
 
 # Delete tables

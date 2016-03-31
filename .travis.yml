@@ -13,10 +13,14 @@ python:
 env:
   global:
     - TOXENV="py${PYTHON_VERSION//./}"
+    - DATABASE_URL=postgres://postgres@localhost:5432/postgres
 
 install:
   - make install
   - pip install coveralls
+
+before_script:
+  - psql -c 'create database postgres;' -U postgres
 
 script:
   # FIXME: configure linter

@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import os
 import io
 import json
 import pytest
@@ -11,6 +12,7 @@ from decimal import Decimal
 from tabulator import topen
 from sqlalchemy import create_engine
 from jsontableschema.model import SchemaModel
+from dotenv import load_dotenv; load_dotenv('.env')
 
 from jsontableschema_sql import Storage
 
@@ -26,8 +28,12 @@ def test_storage():
     comments_data = topen('data/comments.csv', with_headers=True).read()
 
     # Storage
-    engine = create_engine('sqlite:///:memory:')
+    engine = create_engine(os.environ['DATABASE_URL'])
     storage = Storage(engine=engine, prefix='prefix_')
+
+    # Delete tables
+    for table in reversed(storage.tables):
+        storage.delete(table)
 
     # Create tables
     storage.create(['articles', 'comments'], [articles_schema, comments_schema])
@@ -41,7 +47,7 @@ def test_storage():
         storage.create('articles', articles_schema)
 
     # Get table representation
-    assert repr(storage) == 'Storage <Engine(sqlite:///:memory:)/None>'
+    assert repr(storage).startswith('Storage')
 
     # Get tables list
     assert storage.tables == ['articles', 'comments']

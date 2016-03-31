@@ -32,6 +32,10 @@ LINT_REQUIRES = [
 TESTS_REQUIRE = [
     'tox',
 ]
+EXAMPLES_REQUIRE = [
+    'psycopg2',
+    'python-dotenv',
+]
 README = read('README.md')
 VERSION = read(PACKAGE, 'VERSION')
 PACKAGES = find_packages(exclude=['examples', 'tests'])
@@ -45,7 +49,7 @@ setup(
     include_package_data=True,
     install_requires=INSTALL_REQUIRES,
     tests_require=TESTS_REQUIRE,
-    extras_require={'develop': LINT_REQUIRES + TESTS_REQUIRE},
+    extras_require={'develop': LINT_REQUIRES + TESTS_REQUIRE + EXAMPLES_REQUIRE},
     zip_safe=False,
     long_description=README,
     description='Generate SQL tables, load and extract data, based on JSON Table Schema descriptors.',

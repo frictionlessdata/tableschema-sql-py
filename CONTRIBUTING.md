@@ -11,6 +11,18 @@ To install package and development dependencies into active environment:
 $ make install
 ```
 
+Then test database has to be configured:
+
+```
+$ cp .env.example .env
+$ editor .env # set DATABASE_URL
+```
+
+By default required packages are installed to work
+with following databases:
+- SQLite
+- PostgreSQL
+
 ## Linting
 
 To lint the project codebase:

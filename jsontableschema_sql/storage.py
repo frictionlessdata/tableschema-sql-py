@@ -5,8 +5,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
+import json
 import jsontableschema
+from jsontableschema import storage as base
 from jsontableschema.model import SchemaModel
+from jsontableschema.exceptions import InvalidObjectType
 from sqlalchemy import Table, MetaData
 
 from . import mappers
@@ -14,7 +17,7 @@ from . import mappers
 
 # Module API
 
-class Storage(object):
+class Storage(base.Storage):
     """SQL Tabular Storage.
 
     Parameters
@@ -36,6 +39,7 @@ class Storage(object):
         self.__engine = engine
         self.__dbschema = dbschema
         self.__prefix = prefix
+        self.__schemas = {}
 
         # Create metadata
         self.__metadata = MetaData(
@@ -110,6 +114,11 @@ class Storage(object):
 
         # Define tables
         for table, schema in zip(tables, schemas):
+
+            # Add to schemas
+            self.__schemas[table] = schema
+
+            # Crate sa table
             table = mappers.convert_table(self.__prefix, table)
             jsontableschema.validate(schema)
             columns, constraints = mappers.convert_schema(
@@ -149,6 +158,10 @@ class Storage(object):
                 message = 'Table "%s" doesn\'t exist.' % self
                 raise RuntimeError(message)
 
+            # Remove from schemas
+            if table in self.__schemas:
+                del self.__schemas[table]
+
             # Add table to dbtables
             dbtable = self.__get_dbtable(table)
             dbtables.append(dbtable)
@@ -174,10 +187,13 @@ class Storage(object):
         """
 
         # Get schema
-        dbtable = self.__get_dbtable(table)
-        table = mappers.convert_table(self.__prefix, table)
-        schema = mappers.restore_schema(
-                self.__prefix, table, dbtable.columns, dbtable.constraints)
+        if table in self.__schemas:
+            schema = self.__schemas[table]
+        else:
+            dbtable = self.__get_dbtable(table)
+            table = mappers.convert_table(self.__prefix, table)
+            schema = mappers.restore_schema(
+                    self.__prefix, table, dbtable.columns, dbtable.constraints)
 
         return schema
 
@@ -201,10 +217,7 @@ class Storage(object):
         result = dbtable.select().execute()
 
         # Yield data
-        schema = self.describe(table)
-        model = SchemaModel(schema)
         for row in result:
-            row = tuple(model.convert_row(*row, fail_fast=True))
             yield row
 
     def write(self, table, data):
@@ -225,9 +238,13 @@ class Storage(object):
         cdata = []
         for row in data:
             rdata = {}
-            row = tuple(model.convert_row(*row, fail_fast=True))
             for index, field in enumerate(model.fields):
-                rdata[field['name']] = row[index]
+                value = row[index]
+                try:
+                    value = model.cast(field['name'], value)
+                except InvalidObjectType as exception:
+                    value = json.loads(value)
+                rdata[field['name']] = value
             cdata.append(rdata)
 
         # Insert data
@@ -243,8 +260,7 @@ class Storage(object):
         # Prepare dict key
         key = mappers.convert_table(self.__prefix, table)
         if self.__dbschema:
-            # SQLite doesn't support db schemas concept
-            # like PostgreSQL does. For now we don't test it.
+            # TODO: Start to test dbschema parameter
             key = '.'.join(self.__dbschema, key)  # pragma: no cover
 
         return self.__metadata.tables[key]

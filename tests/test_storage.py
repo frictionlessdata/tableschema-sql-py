@@ -4,13 +4,16 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import os
 import io
 import json
 import pytest
+from copy import deepcopy
 from decimal import Decimal
 from tabulator import topen
 from sqlalchemy import create_engine
 from jsontableschema.model import SchemaModel
+from dotenv import load_dotenv; load_dotenv('.env')
 
 from jsontableschema_sql import Storage
 
@@ -25,9 +28,15 @@ def test_storage():
     articles_data = topen('data/articles.csv', with_headers=True).read()
     comments_data = topen('data/comments.csv', with_headers=True).read()
 
+    # Engine
+    engine = create_engine(os.environ['DATABASE_URL'])
+
     # Storage
-    engine = create_engine('sqlite:///:memory:')
     storage = Storage(engine=engine, prefix='prefix_')
+
+    # Delete tables
+    for table in reversed(storage.tables):
+        storage.delete(table)
 
     # Create tables
     storage.create(['articles', 'comments'], [articles_schema, comments_schema])
@@ -36,23 +45,26 @@ def test_storage():
     storage.write('articles', articles_data)
     storage.write('comments', comments_data)
 
+    # Create new storage to use reflection only
+    storage = Storage(engine=engine, prefix='prefix_')
+
     # Create existent table
     with pytest.raises(RuntimeError):
         storage.create('articles', articles_schema)
 
     # Get table representation
-    assert repr(storage) == 'Storage <Engine(sqlite:///:memory:)/None>'
+    assert repr(storage).startswith('Storage')
 
     # Get tables list
     assert storage.tables == ['articles', 'comments']
 
     # Get table schemas
-    assert storage.describe('articles') == articles_schema
-    assert storage.describe('comments') == comments_schema
+    assert storage.describe('articles') == convert_schema(articles_schema)
+    assert storage.describe('comments') == convert_schema(comments_schema)
 
     # Get table data
-    assert list(storage.read('articles')) == convert(articles_schema, articles_data)
-    assert list(storage.read('comments')) == convert(comments_schema, comments_data)
+    assert list(storage.read('articles')) == convert_data(articles_schema, articles_data)
+    assert list(storage.read('comments')) == convert_data(comments_schema, comments_data)
 
     # Delete tables
     for table in reversed(storage.tables):
@@ -65,7 +77,16 @@ def test_storage():
 
 # Helpers
 
-def convert(schema, data):
+def convert_schema(schema):
+    schema = deepcopy(schema)
+    for field in schema['fields']:
+        if field['type'] in ['array', 'geojson']:
+            field['type'] = 'object'
+        if 'format' in field:
+            del field['format']
+    return schema
+
+def convert_data(schema, data):
     result = []
     model = SchemaModel(schema)
     for item in data:

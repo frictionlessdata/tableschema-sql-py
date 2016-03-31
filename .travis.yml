@@ -1,6 +1,9 @@
 sudo:
   false
 
+addons:
+  postgresql: "9.4"
+
 language:
   python
 
@@ -13,6 +16,7 @@ python:
 env:
   global:
     - TOXENV="py${PYTHON_VERSION//./}"
+    - DATABASE_URL=postgres://postgres@localhost:5432/postgres
 
 install:
   - make install

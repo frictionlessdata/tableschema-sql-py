@@ -32,6 +32,36 @@
         {
             "name": "rating",
             "type": "number"
+        },
+        {
+            "name": "created_year",
+            "type": "date",
+            "format": "fmt:%Y"
+        },
+        {
+            "name": "created_date",
+            "type": "date"
+        },
+        {
+            "name": "created_time",
+            "type": "time"
+        },
+        {
+            "name": "created_datetime",
+            "type": "datetime"
+        },
+        {
+            "name": "stats",
+            "type": "object"
+        },
+        {
+            "name": "persons",
+            "type": "array"
+        },
+        {
+            "name": "location",
+            "type": "geojson"
         }
+
     ]
 }

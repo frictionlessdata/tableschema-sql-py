@@ -6,8 +6,9 @@ from __future__ import unicode_literals
 
 import six
 from sqlalchemy import (
-        Column, Text, Integer, Float, Boolean,
+        Column, Text, Float, Integer, Boolean, Date, Time, DateTime,
         PrimaryKeyConstraint, ForeignKeyConstraint)
+from sqlalchemy.dialects.postgres import ARRAY, JSON, JSONB
 
 
 # Module API
@@ -36,10 +37,16 @@ def convert_schema(prefix, table, schema):  # noqa
 
     # Mapping
     mapping = {
-        'string': Text(),
-        'integer': Integer(),
-        'number': Float(),
-        'boolean': Boolean(),
+        'string': Text,
+        'number': Float,
+        'integer': Integer,
+        'boolean': Boolean,
+        'object': JSONB,
+        'array': JSONB,
+        'date': Date,
+        'time': Time,
+        'datetime': DateTime,
+        'geojson': JSONB,
     }
 
     # Fields
@@ -96,18 +103,25 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
     # Mapping
     mapping = {
         Text: 'string',
-        Integer: 'integer',
         Float: 'number',
+        Integer: 'integer',
         Boolean: 'boolean',
+        JSON: 'object',
+        JSONB: 'object',
+        ARRAY: 'array',
+        Date: 'date',
+        Time: 'time',
+        DateTime: 'datetime',
     }
 
     # Fields
     fields = []
     for column in columns:
-        try:
-            field_type = [value for col_type, value in mapping.items()
-                          if isinstance(column.type, col_type)][0]
-        except IndexError:
+        field_type = None
+        for key, value in mapping.items():
+            if isinstance(column.type, key):
+                field_type = value
+        if field_type is None:
             message = 'Type %s is not supported' % column.type
             raise TypeError(message)
         field = {'name': column.name, 'type': field_type}

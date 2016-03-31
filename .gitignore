@@ -56,6 +56,12 @@ docs/_build/
 # PyBuilder
 target/
 
+# pyenv
+.python-version
+
+# dotenv
+.env
+
 # Extras
 tabulator
 jsontableschema

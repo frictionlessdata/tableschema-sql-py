@@ -8,6 +8,7 @@ import os
 import io
 import json
 import pytest
+from copy import deepcopy
 from decimal import Decimal
 from tabulator import topen
 from sqlalchemy import create_engine
@@ -53,12 +54,12 @@ def test_storage():
     assert storage.tables == ['articles', 'comments']
 
     # Get table schemas
-    assert storage.describe('articles') == articles_schema
-    assert storage.describe('comments') == comments_schema
+    assert storage.describe('articles') == convert_schema(articles_schema)
+    assert storage.describe('comments') == convert_schema(comments_schema)
 
     # Get table data
-    assert list(storage.read('articles')) == convert(articles_schema, articles_data)
-    assert list(storage.read('comments')) == convert(comments_schema, comments_data)
+    assert list(storage.read('articles')) == convert_data(articles_schema, articles_data)
+    assert list(storage.read('comments')) == convert_data(comments_schema, comments_data)
 
     # Delete tables
     for table in reversed(storage.tables):
@@ -71,7 +72,14 @@ def test_storage():
 
 # Helpers
 
-def convert(schema, data):
+def convert_schema(schema):
+    schema = deepcopy(schema)
+    for field in schema['fields']:
+        if field['type'] in ['array', 'geojson']:
+            field['type'] = 'object'
+    return schema
+
+def convert_data(schema, data):
     result = []
     model = SchemaModel(schema)
     for item in data:

@@ -48,7 +48,10 @@
         {
             "name": "stats",
             "type": "object"
+        },
+        {
+            "name": "persons",
+            "type": "array"
         }
-
     ]
 }

@@ -8,7 +8,7 @@ import six
 from sqlalchemy import (
         Column, Text, Float, Integer, Boolean, Date, Time, DateTime,
         PrimaryKeyConstraint, ForeignKeyConstraint)
-from sqlalchemy.dialects.postgres import JSON, JSONB
+from sqlalchemy.dialects.postgres import ARRAY, JSON, JSONB
 
 
 # Module API
@@ -42,6 +42,7 @@ def convert_schema(prefix, table, schema):  # noqa
         'integer': Integer,
         'boolean': Boolean,
         'object': JSONB,
+        'array': JSONB,
         'date': Date,
         'time': Time,
         'datetime': DateTime,
@@ -106,6 +107,7 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
         Boolean: 'boolean',
         JSON: 'object',
         JSONB: 'object',
+        ARRAY: 'array',
         Date: 'date',
         Time: 'time',
         DateTime: 'datetime',

@@ -44,6 +44,11 @@
         {
             "name": "created_datetime",
             "type": "datetime"
+        },
+        {
+            "name": "stats",
+            "type": "object"
         }
+
     ]
 }

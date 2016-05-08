@@ -236,25 +236,25 @@ class Storage(base.Storage):
         schema = self.describe(table)
         model = SchemaModel(schema)
         dbtable = self.__get_dbtable(table)
-        cdata = []
+        rows = []
         for row in data:
-            rdata = {}
+            row_dict = {}
             for index, field in enumerate(model.fields):
                 value = row[index]
                 try:
                     value = model.cast(field['name'], value)
                 except InvalidObjectType as exception:
                     value = json.loads(value)
-                rdata[field['name']] = value
-            cdata.append(rdata)
-            if len(cdata) > 1000:
+                row_dict[field['name']] = value
+            rows.append(row_dict)
+            if len(rows) > 1000:
                 # Insert data
-                dbtable.insert().execute(cdata)
-                cdata = []
-
-        if len(cdata) > 0:
+                dbtable.insert().execute(rows)
+                # Clean memory
+                rows = []
+        if len(rows) > 0:
             # Insert data
-            dbtable.insert().execute(cdata)
+            dbtable.insert().execute(rows)
 
     # Private
 

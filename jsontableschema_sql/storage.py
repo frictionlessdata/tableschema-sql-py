@@ -235,6 +235,7 @@ class Storage(base.Storage):
         # Process data
         schema = self.describe(table)
         model = SchemaModel(schema)
+        dbtable = self.__get_dbtable(table)
         cdata = []
         for row in data:
             rdata = {}
@@ -246,10 +247,14 @@ class Storage(base.Storage):
                     value = json.loads(value)
                 rdata[field['name']] = value
             cdata.append(rdata)
+            if len(cdata) > 1000:
+                # Insert data
+                dbtable.insert().execute(cdata)
+                cdata = []
 
-        # Insert data
-        dbtable = self.__get_dbtable(table)
-        dbtable.insert().execute(cdata)
+        if len(cdata) > 0:
+            # Insert data
+            dbtable.insert().execute(cdata)
 
     # Private
 

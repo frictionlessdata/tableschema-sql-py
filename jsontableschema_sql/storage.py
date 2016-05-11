@@ -214,7 +214,8 @@ class Storage(base.Storage):
 
         # Get result
         dbtable = self.__get_dbtable(table)
-        result = dbtable.select().execute()
+        select = dbtable.select().execution_options(stream_results=True)
+        result = select.execute()
 
         # Yield data
         for row in result:

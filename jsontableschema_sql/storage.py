@@ -214,6 +214,8 @@ class Storage(base.Storage):
 
         # Get result
         dbtable = self.__get_dbtable(table)
+        # Streaming could be not working for some backends:
+        # http://docs.sqlalchemy.org/en/latest/core/connections.html
         select = dbtable.select().execution_options(stream_results=True)
         result = select.execute()
 

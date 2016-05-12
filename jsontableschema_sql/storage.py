@@ -36,14 +36,14 @@ class Storage(base.Storage):
     def __init__(self, engine, dbschema=None, prefix=''):
 
         # Set attributes
-        self.__engine = engine
+        self.__connection = engine.connect()
         self.__dbschema = dbschema
         self.__prefix = prefix
         self.__schemas = {}
 
         # Create metadata
         self.__metadata = MetaData(
-                bind=self.__engine,
+                bind=self.__connection,
                 schema=self.__dbschema,
                 reflect=True)
 
@@ -52,7 +52,7 @@ class Storage(base.Storage):
         # Template and format
         template = 'Storage <{engine}/{dbschema}>'
         text = template.format(
-                engine=self.__engine,
+                engine=self.__connection.engine,
                 dbschema=self.__dbschema)
 
         return text
@@ -234,30 +234,34 @@ class Storage(base.Storage):
             List of data tuples.
 
         """
+        BUFFER_ROWS = 1000
 
         # Process data
         schema = self.describe(table)
         model = SchemaModel(schema)
         dbtable = self.__get_dbtable(table)
         rows = []
-        for row in data:
-            row_dict = {}
-            for index, field in enumerate(model.fields):
-                value = row[index]
-                try:
-                    value = model.cast(field['name'], value)
-                except InvalidObjectType as exception:
-                    value = json.loads(value)
-                row_dict[field['name']] = value
-            rows.append(row_dict)
-            if len(rows) > 1000:
+
+        # Write data
+        with self.__connection.begin():
+            for row in data:
+                row_dict = {}
+                for index, field in enumerate(model.fields):
+                    value = row[index]
+                    try:
+                        value = model.cast(field['name'], value)
+                    except InvalidObjectType as exception:
+                        value = json.loads(value)
+                    row_dict[field['name']] = value
+                rows.append(row_dict)
+                if len(rows) > BUFFER_ROWS:
+                    # Insert data
+                    dbtable.insert().execute(rows)
+                    # Clean memory
+                    rows = []
+            if len(rows) > 0:
                 # Insert data
                 dbtable.insert().execute(rows)
-                # Clean memory
-                rows = []
-        if len(rows) > 0:
-            # Insert data
-            dbtable.insert().execute(rows)
 
     # Private
 

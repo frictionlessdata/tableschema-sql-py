@@ -32,7 +32,7 @@ def test_storage():
     engine = create_engine(os.environ['DATABASE_URL'])
 
     # Storage
-    storage = Storage(engine=engine, prefix='prefix_')
+    storage = Storage(engine=engine, prefix='test_storage_')
 
     # Delete tables
     for table in reversed(storage.tables):
@@ -46,7 +46,7 @@ def test_storage():
     storage.write('comments', comments_data)
 
     # Create new storage to use reflection only
-    storage = Storage(engine=engine, prefix='prefix_')
+    storage = Storage(engine=engine, prefix='test_storage_')
 
     # Create existent table
     with pytest.raises(RuntimeError):
@@ -73,6 +73,45 @@ def test_storage():
     # Delete non existent table
     with pytest.raises(RuntimeError):
         storage.delete('articles')
+
+
+def test_storage_bigdata():
+
+    # Generate schema/data
+    schema = {'fields': [{'name': 'id', 'type': 'integer'}]}
+    data = [(value,) for value in range(0, 2500)]
+
+    # Push data
+    engine = create_engine(os.environ['DATABASE_URL'])
+    storage = Storage(engine=engine, prefix='test_storage_bigdata_')
+    for table in reversed(storage.tables):
+        storage.delete(table)
+    storage.create('table', schema)
+    storage.write('table', data)
+
+    # Pull data
+    assert list(storage.read('table')) == data
+
+
+def test_storage_bigdata_rollback():
+
+    # Generate schema/data
+    schema = {'fields': [{'name': 'id', 'type': 'integer'}]}
+    data = [(value,) for value in range(0, 2500)] + [('bad-value',)]
+
+    # Push data
+    engine = create_engine(os.environ['DATABASE_URL'])
+    storage = Storage(engine=engine, prefix='test_storage_bigdata_rollback')
+    for table in reversed(storage.tables):
+        storage.delete(table)
+    storage.create('table', schema)
+    try:
+        storage.write('table', data)
+    except Exception:
+        pass
+
+    # Pull data
+    assert list(storage.read('table')) == []
 
 
 # Helpers

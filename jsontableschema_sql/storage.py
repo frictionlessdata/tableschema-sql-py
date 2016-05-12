@@ -236,14 +236,14 @@ class Storage(base.Storage):
         """
         BUFFER_ROWS = 1000
 
-        # Process data
+        # Prepare
         schema = self.describe(table)
         model = SchemaModel(schema)
         dbtable = self.__get_dbtable(table)
-        rows = []
 
-        # Write data
+        # Write
         with self.__connection.begin():
+            rows = []
             for row in data:
                 row_dict = {}
                 for index, field in enumerate(model.fields):

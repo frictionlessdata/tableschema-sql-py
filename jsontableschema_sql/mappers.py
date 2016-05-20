@@ -50,6 +50,16 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor):
         'geojson': JSONB,
     }
 
+    # Primary key
+    pk = schema.get('primaryKey', None)
+    if pk is not None:
+        if isinstance(pk, six.string_types):
+            pk = [pk]
+        constraint = PrimaryKeyConstraint(*pk)
+        constraints.append(constraint)
+    else:
+        pk = []
+
     # Fields
     for field in descriptor['fields']:
         try:
@@ -59,7 +69,8 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor):
             message = message % (field['type'], field['name'])
             raise TypeError(message)
         nullable = not field.get('constraints', {}).get('required', False)
-        column = Column(field['name'], column_type, nullable=nullable)
+        column = Column(field['name'], column_type, nullable=nullable,
+                        index=field['name'] in pk)
         columns.append(column)
 
     # Primary key

@@ -250,7 +250,7 @@ class Storage(base.Storage):
                     value = row[index]
                     try:
                         value = model.cast(field['name'], value)
-                    except InvalidObjectType as exception:
+                    except InvalidObjectType:
                         value = json.loads(value)
                     row_dict[field['name']] = value
                 rows.append(row_dict)

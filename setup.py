@@ -26,10 +26,8 @@ INSTALL_REQUIRES = [
     'jsontableschema',
     'tabulator',
 ]
-LINT_REQUIRES = [
-    'pylint',
-]
 TESTS_REQUIRE = [
+    'pylama',
     'tox',
 ]
 EXAMPLES_REQUIRE = [
@@ -49,7 +47,7 @@ setup(
     include_package_data=True,
     install_requires=INSTALL_REQUIRES,
     tests_require=TESTS_REQUIRE,
-    extras_require={'develop': LINT_REQUIRES + TESTS_REQUIRE + EXAMPLES_REQUIRE},
+    extras_require={'develop': TESTS_REQUIRE + EXAMPLES_REQUIRE},
     zip_safe=False,
     long_description=README,
     description='Generate SQL tables, load and extract data, based on JSON Table Schema descriptors.',

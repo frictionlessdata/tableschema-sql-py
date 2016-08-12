@@ -7,6 +7,9 @@ from __future__ import unicode_literals
 import six
 import json
 import jsontableschema
+from future.utils import raise_with_traceback
+from jsontableschema import storage as base
+from jsontableschema.model import SchemaModel
 from jsontableschema.exceptions import InvalidObjectType
 from sqlalchemy import Table, MetaData
 from . import mappers
@@ -64,7 +67,7 @@ class Storage(object):
 
         return buckets
 
-    def create(self, bucket, descriptor, force=False):
+    def create(self, bucket, descriptor, force=False, indexes_fields=[]):
 
         # Make lists
         buckets = bucket
@@ -73,6 +76,8 @@ class Storage(object):
         descriptors = descriptor
         if isinstance(descriptor, dict):
             descriptors = [descriptor]
+        if len(indexes_fields) == 0 or not isinstance(indexes_fields[0], list):
+            indexes_fields = [indexes_fields]
 
         # Check buckets for existence
         for bucket in reversed(self.buckets):
@@ -83,17 +88,17 @@ class Storage(object):
                 self.delete(bucket)
 
         # Define buckets
-        for bucket, descriptor in zip(buckets, descriptors):
+        for bucket, descriptor, index_fields in zip(buckets, descriptors, indexes_fields):
 
             # Add to schemas
             self.__descriptors[bucket] = descriptor
 
-            # Crate table
+            # Create table
             jsontableschema.validate(descriptor)
             tablename = mappers.bucket_to_tablename(self.__prefix, bucket)
-            columns, constraints = mappers.descriptor_to_columns_and_constraints(
-                self.__prefix, bucket, descriptor)
-            Table(tablename, self.__metadata, *(columns+constraints))
+            columns, constraints, indexes = mappers.descriptor_to_columns_and_constraints(
+                self.__prefix, bucket, descriptor, index_fields)
+            Table(tablename, self.__metadata, *(columns+constraints+indexes))
 
         # Create tables, update metadata
         self.__metadata.create_all()
@@ -195,6 +200,7 @@ class Storage(object):
             if len(keyed_rows) > 0:
                 # Insert data
                 table.insert().execute(keyed_rows)
+
 
     # Private
 

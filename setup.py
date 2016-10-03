@@ -21,10 +21,10 @@ def read(*paths):
 PACKAGE = 'jsontableschema_sql'
 NAME = PACKAGE.replace('_', '-')
 INSTALL_REQUIRES = [
-    'six',
-    'sqlalchemy',
-    'jsontableschema',
-    'tabulator',
+    'six>=1.9,<2.0a',
+    'sqlalchemy>=1.0,<2.0a',
+    'jsontableschema>=0.7,<0.8a',
+    'tabulator>=0.7,<0.8a',
 ]
 TESTS_REQUIRE = [
     'pylama',

@@ -7,17 +7,15 @@ from __future__ import unicode_literals
 import six
 import json
 import jsontableschema
-from jsontableschema import storage as base
 from jsontableschema.model import SchemaModel
 from jsontableschema.exceptions import InvalidObjectType
 from sqlalchemy import Table, MetaData
-
 from . import mappers
 
 
 # Module API
 
-class Storage(base.Storage):
+class Storage(object):
     """SQL Tabular Storage.
 
     Parameters
@@ -81,7 +79,7 @@ class Storage(base.Storage):
 
         return existence
 
-    def create(self, table, schema):
+    def create(self, table, schema, force=False):
         """Create table by schema.
 
         Parameters
@@ -129,7 +127,7 @@ class Storage(base.Storage):
         self.__metadata.create_all()
         # Metadata reflect is auto
 
-    def delete(self, table):
+    def delete(self, table=None, ignore=False):
         """Delete table.
 
         Parameters
@@ -171,7 +169,7 @@ class Storage(base.Storage):
         self.__metadata.clear()
         self.__metadata.reflect()
 
-    def describe(self, table):
+    def describe(self, table, schema=None):
         """Return table's JSONTableSchema schema.
 
         Parameters
@@ -221,7 +219,9 @@ class Storage(base.Storage):
 
         # Yield data
         for row in result:
-            yield row
+            yield list(row)
+
+    iter = read
 
     def write(self, table, data):
         """Write data to table.

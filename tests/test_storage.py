@@ -41,6 +41,9 @@ def test_storage():
         ['articles', 'comments'],
         [articles_descriptor, comments_descriptor])
 
+    # Recreate bucket
+    storage.create('comments', comments_descriptor, force=True)
+
     # Write data to buckets
     storage.write('articles', articles_rows)
     storage.write('comments', comments_rows)

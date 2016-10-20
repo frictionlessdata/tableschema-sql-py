@@ -163,12 +163,7 @@ def columns_and_constraints_to_descriptor(prefix, tablename, columns, constraint
             if len(fields) == len(references) == 1:
                 fields = fields.pop()
                 references = references.pop()
-            fk = {
-                'fields': fields,
-                'reference': {
-                    'fields': references,
-                }
-            }
+            fk = {'fields': fields, 'reference': {'fields': references}}
             if resource is not None:
                 fk['reference']['resource'] = resource
             if bucket is not None:

@@ -8,7 +8,7 @@ import six
 from sqlalchemy import (
     Column, Text, VARCHAR,  Float, Integer, Boolean, Date, Time, DateTime,
     PrimaryKeyConstraint, ForeignKeyConstraint)
-from sqlalchemy.dialects.postgres import ARRAY, JSON, JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSON, JSONB, UUID
 
 
 # Module API

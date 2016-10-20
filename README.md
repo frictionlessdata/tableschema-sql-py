@@ -16,7 +16,7 @@ Generate and load SQL tables based on JSON Table Schema descriptors.
 pip install jsontableschema-sql
 ```
 
-### Tabular Storage
+### Storage
 
 Package implements [Tabular Storage](https://github.com/frictionlessdata/jsontableschema-py#storage) interface.
 
@@ -52,6 +52,17 @@ data.csv -> SQL talbe data
 ### Drivers
 
 SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
+
+## API Reference
+
+### Snapshot
+
+https://github.com/frictionlessdata/jsontableschema-py#snapshot
+
+### Detailed
+
+- [Docstrings](https://github.com/frictionlessdata/jsontableschema-py/tree/master/jsontableschema/storage.py)
+- [Changelog](https://github.com/frictionlessdata/jsontableschema-sql-py/commits/master)
 
 ## Contributing
 

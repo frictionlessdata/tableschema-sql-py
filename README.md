@@ -3,13 +3,22 @@
 [![Travis](https://img.shields.io/travis/frictionlessdata/jsontableschema-sql-py/master.svg)](https://travis-ci.org/frictionlessdata/jsontableschema-sql-py)
 [![Coveralls](http://img.shields.io/coveralls/frictionlessdata/jsontableschema-sql-py/master.svg)](https://coveralls.io/r/frictionlessdata/jsontableschema-sql-py?branch=master)
 [![PyPi](https://img.shields.io/pypi/v/jsontableschema-sql.svg)](https://pypi.python.org/pypi/jsontableschema-sql)
+[![SemVer](https://img.shields.io/badge/versions-SemVer-brightgreen.svg)](http://semver.org/)
 [![Gitter](https://img.shields.io/gitter/room/frictionlessdata/chat.svg)](https://gitter.im/frictionlessdata/chat)
 
 Generate and load SQL tables based on JSON Table Schema descriptors.
 
-## Tabular Storage
+## Getting Started
 
-Package implements [Tabular Storage](https://github.com/okfn/datapackage-storage-py#tabular-storage) interface.
+### Installation
+
+```bash
+pip install jsontableschema-sql
+```
+
+### Storage
+
+Package implements [Tabular Storage](https://github.com/frictionlessdata/jsontableschema-py#storage) interface.
 
 SQLAlchemy is used as sql wrapper. We can get storage this way:
 
@@ -24,30 +33,36 @@ storage = Storage(engine)
 Then we could interact with storage:
 
 ```python
-storage.tables
-storage.check('table_name') # check existence
-storage.create('table_name', schema)
-storage.delete('table_name')
-storage.describe('table_name') # return schema
-storage.read('table_name') # return data
-storage.write('table_name', data)
+storage.buckets
+storage.create('bucket', descriptor)
+storage.delete('bucket')
+storage.describe('bucket') # return descriptor
+storage.iter('bucket') # yield rows
+storage.read('bucket') # return rows
+storage.write('bucket', rows)
 ```
 
-## Mappings
+### Mappings
 
 ```
 schema.json -> SQL table schema
 data.csv -> SQL talbe data
 ```
 
-## Drivers
+### Drivers
 
 SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
 
-## Documentation
+## API Reference
 
-API documentation is presented as docstings:
-- [Storage](https://github.com/frictionlessdata/jsontableschema-sql-py/blob/master/jsontableschema_sql/storage.py)
+### Snapshot
+
+https://github.com/frictionlessdata/jsontableschema-py#snapshot
+
+### Detailed
+
+- [Docstrings](https://github.com/frictionlessdata/jsontableschema-py/tree/master/jsontableschema/storage.py)
+- [Changelog](https://github.com/frictionlessdata/jsontableschema-sql-py/commits/master)
 
 ## Contributing
 

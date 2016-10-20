@@ -10,12 +10,11 @@ import json
 import pytest
 from copy import deepcopy
 from decimal import Decimal
-from tabulator import topen
+from tabulator import Stream
+from jsontableschema import Schema
 from sqlalchemy import create_engine
-from jsontableschema.model import SchemaModel
-from dotenv import load_dotenv; load_dotenv('.env')
-
 from jsontableschema_sql import Storage
+from dotenv import load_dotenv; load_dotenv('.env')
 
 
 # Tests
@@ -23,10 +22,10 @@ from jsontableschema_sql import Storage
 def test_storage():
 
     # Get resources
-    articles_schema = json.load(io.open('data/articles.json', encoding='utf-8'))
-    comments_schema = json.load(io.open('data/comments.json', encoding='utf-8'))
-    articles_data = topen('data/articles.csv', with_headers=True).read()
-    comments_data = topen('data/comments.csv', with_headers=True).read()
+    articles_descriptor = json.load(io.open('data/articles.json', encoding='utf-8'))
+    comments_descriptor = json.load(io.open('data/comments.json', encoding='utf-8'))
+    articles_rows = Stream('data/articles.csv', headers=1).open().read()
+    comments_rows = Stream('data/comments.csv', headers=1).open().read()
 
     # Engine
     engine = create_engine(os.environ['DATABASE_URL'])
@@ -34,100 +33,100 @@ def test_storage():
     # Storage
     storage = Storage(engine=engine, prefix='test_storage_')
 
-    # Delete tables
-    for table in reversed(storage.tables):
-        storage.delete(table)
+    # Delete buckets
+    storage.delete()
 
-    # Create tables
-    storage.create(['articles', 'comments'], [articles_schema, comments_schema])
+    # Create buckets
+    storage.create(
+        ['articles', 'comments'],
+        [articles_descriptor, comments_descriptor])
 
-    # Write data to tables
-    storage.write('articles', articles_data)
-    storage.write('comments', comments_data)
+    # Recreate bucket
+    storage.create('comments', comments_descriptor, force=True)
+
+    # Write data to buckets
+    storage.write('articles', articles_rows)
+    storage.write('comments', comments_rows)
 
     # Create new storage to use reflection only
     storage = Storage(engine=engine, prefix='test_storage_')
 
-    # Create existent table
+    # Create existent bucket
     with pytest.raises(RuntimeError):
-        storage.create('articles', articles_schema)
+        storage.create('articles', articles_descriptor)
 
-    # Get table representation
+    # Assert representation
     assert repr(storage).startswith('Storage')
 
-    # Get tables list
-    assert storage.tables == ['articles', 'comments']
+    # Assert buckets
+    assert storage.buckets == ['articles', 'comments']
 
-    # Get table schemas
-    assert storage.describe('articles') == convert_schema(articles_schema)
-    assert storage.describe('comments') == convert_schema(comments_schema)
+    # Assert descriptors
+    assert storage.describe('articles') == sync_descriptor(articles_descriptor)
+    assert storage.describe('comments') == sync_descriptor(comments_descriptor)
 
-    # Get table data
-    assert list(storage.read('articles')) == convert_data(articles_schema, articles_data)
-    assert list(storage.read('comments')) == convert_data(comments_schema, comments_data)
+    # Assert rows
+    assert list(storage.read('articles')) == sync_rows(articles_descriptor, articles_rows)
+    assert list(storage.read('comments')) == sync_rows(comments_descriptor, comments_rows)
 
-    # Delete tables
-    for table in reversed(storage.tables):
-        storage.delete(table)
-
-    # Delete non existent table
+    # Delete non existent bucket
     with pytest.raises(RuntimeError):
-        storage.delete('articles')
+        storage.delete('non_existent')
+
+    # Delete buckets
+    storage.delete()
 
 
 def test_storage_bigdata():
 
     # Generate schema/data
-    schema = {'fields': [{'name': 'id', 'type': 'integer'}]}
-    data = [(value,) for value in range(0, 2500)]
+    descriptor = {'fields': [{'name': 'id', 'type': 'integer'}]}
+    rows = [[value,] for value in range(0, 2500)]
 
-    # Push data
+    # Push rows
     engine = create_engine(os.environ['DATABASE_URL'])
     storage = Storage(engine=engine, prefix='test_storage_bigdata_')
-    for table in reversed(storage.tables):
-        storage.delete(table)
-    storage.create('table', schema)
-    storage.write('table', data)
+    storage.create('bucket', descriptor, force=True)
+    storage.write('bucket', rows)
 
-    # Pull data
-    assert list(storage.read('table')) == data
+    # Pull rows
+    assert list(storage.read('bucket')) == rows
 
 
 def test_storage_bigdata_rollback():
 
     # Generate schema/data
-    schema = {'fields': [{'name': 'id', 'type': 'integer'}]}
-    data = [(value,) for value in range(0, 2500)] + [('bad-value',)]
+    descriptor = {'fields': [{'name': 'id', 'type': 'integer'}]}
+    rows = [(value,) for value in range(0, 2500)] + [('bad-value',)]
 
-    # Push data
+    # Push rows
     engine = create_engine(os.environ['DATABASE_URL'])
-    storage = Storage(engine=engine, prefix='test_storage_bigdata_rollback')
-    for table in reversed(storage.tables):
-        storage.delete(table)
-    storage.create('table', schema)
+    storage = Storage(engine=engine, prefix='test_storage_bigdata_rollback_')
+    storage.create('bucket', descriptor, force=True)
     try:
-        storage.write('table', data)
+        storage.write('bucket', rows)
     except Exception:
         pass
 
-    # Pull data
-    assert list(storage.read('table')) == []
+    # Pull rows
+    assert list(storage.read('bucket')) == []
 
 
 # Helpers
 
-def convert_schema(schema):
-    schema = deepcopy(schema)
-    for field in schema['fields']:
+def sync_descriptor(descriptor):
+    descriptor = deepcopy(descriptor)
+    for field in descriptor['fields']:
         if field['type'] in ['array', 'geojson']:
             field['type'] = 'object'
         if 'format' in field:
             del field['format']
-    return schema
+    return descriptor
 
-def convert_data(schema, data):
+
+def sync_rows(descriptor, rows):
     result = []
-    model = SchemaModel(schema)
-    for item in data:
-        result.append(tuple(model.convert_row(*item)))
+    schema = Schema(descriptor)
+    for row in rows:
+        result.append(schema.cast_row(row))
     return result

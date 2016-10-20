@@ -7,27 +7,22 @@ from __future__ import unicode_literals
 import six
 import json
 import jsontableschema
-from jsontableschema import storage as base
-from jsontableschema.model import SchemaModel
 from jsontableschema.exceptions import InvalidObjectType
 from sqlalchemy import Table, MetaData
-
 from . import mappers
 
 
 # Module API
 
-class Storage(base.Storage):
+class Storage(object):
     """SQL Tabular Storage.
 
-    Parameters
-    ----------
-    engine: object
-        SQLAlchemy engine.
-    dbschema: str
-        Database schema name.
-    prefix: str
-        Prefix for all tables.
+    It's an implementation of `jsontablescema.Storage`.
+
+    Args:
+        engine (object): SQLAlchemy engine
+        dbschema (str): database schema name
+        prefix (str): prefix for all buckets
 
     """
 
@@ -39,240 +34,177 @@ class Storage(base.Storage):
         self.__connection = engine.connect()
         self.__dbschema = dbschema
         self.__prefix = prefix
-        self.__schemas = {}
+        self.__descriptors = {}
 
         # Create metadata
         self.__metadata = MetaData(
-                bind=self.__connection,
-                schema=self.__dbschema,
-                reflect=True)
+            bind=self.__connection,
+            schema=self.__dbschema,
+            reflect=True)
 
     def __repr__(self):
 
         # Template and format
         template = 'Storage <{engine}/{dbschema}>'
         text = template.format(
-                engine=self.__connection.engine,
-                dbschema=self.__dbschema)
+            engine=self.__connection.engine,
+            dbschema=self.__dbschema)
 
         return text
 
     @property
-    def tables(self):
-        """Return list of storage's table names.
-        """
+    def buckets(self):
 
         # Collect
-        tables = []
-        for dbtable in self.__metadata.sorted_tables:
-            table = dbtable.name
-            table = mappers.restore_table(self.__prefix, table)
-            if table is not None:
-                tables.append(table)
+        buckets = []
+        for table in self.__metadata.sorted_tables:
+            bucket = mappers.tablename_to_bucket(self.__prefix, table.name)
+            if bucket is not None:
+                buckets.append(bucket)
 
-        return tables
+        return buckets
 
-    def check(self, table):
-        """Return if table exists.
-        """
-
-        # Check existence
-        existence = table in self.tables
-
-        return existence
-
-    def create(self, table, schema):
-        """Create table by schema.
-
-        Parameters
-        ----------
-        table: str/list
-            Table name or list of table names.
-        schema: dict/list
-            JSONTableSchema schema or list of schemas.
-
-        Raises
-        ------
-        RuntimeError
-            If table already exists.
-
-        """
+    def create(self, bucket, descriptor, force=False):
 
         # Make lists
-        tables = table
-        if isinstance(table, six.string_types):
-            tables = [table]
-        schemas = schema
-        if isinstance(schema, dict):
-            schemas = [schema]
+        buckets = bucket
+        if isinstance(bucket, six.string_types):
+            buckets = [bucket]
+        descriptors = descriptor
+        if isinstance(descriptor, dict):
+            descriptors = [descriptor]
 
-        # Check tables for existence
-        for table in tables:
-            if self.check(table):
-                message = 'Table "%s" already exists.' % table
-                raise RuntimeError(message)
+        # Check buckets for existence
+        for bucket in reversed(self.buckets):
+            if bucket in buckets:
+                if not force:
+                    message = 'Bucket "%s" already exists.' % bucket
+                    raise RuntimeError(message)
+                self.delete(bucket)
 
-        # Define tables
-        for table, schema in zip(tables, schemas):
+        # Define buckets
+        for bucket, descriptor in zip(buckets, descriptors):
 
             # Add to schemas
-            self.__schemas[table] = schema
+            self.__descriptors[bucket] = descriptor
 
-            # Crate sa table
-            table = mappers.convert_table(self.__prefix, table)
-            jsontableschema.validate(schema)
-            columns, constraints = mappers.convert_schema(
-                    self.__prefix, table, schema)
-            Table(table, self.__metadata, *(columns+constraints))
+            # Crate table
+            jsontableschema.validate(descriptor)
+            tablename = mappers.bucket_to_tablename(self.__prefix, bucket)
+            columns, constraints = mappers.descriptor_to_columns_and_constraints(
+                self.__prefix, bucket, descriptor)
+            Table(tablename, self.__metadata, *(columns+constraints))
 
         # Create tables, update metadata
         self.__metadata.create_all()
-        # Metadata reflect is auto
 
-    def delete(self, table):
-        """Delete table.
-
-        Parameters
-        ----------
-        table: str/list
-            Table name or list of table names.
-
-        Raises
-        ------
-        RuntimeError
-            If table doesn't exist.
-
-        """
+    def delete(self, bucket=None, ignore=False):
 
         # Make lists
-        tables = table
-        if isinstance(table, six.string_types):
-            tables = [table]
+        buckets = bucket
+        if isinstance(bucket, six.string_types):
+            buckets = [bucket]
+        elif bucket is None:
+            buckets = reversed(self.buckets)
 
-        # Iterate over tables
-        dbtables = []
-        for table in tables:
+        # Iterate over buckets
+        tables = []
+        for bucket in buckets:
 
             # Check existent
-            if not self.check(table):
-                message = 'Table "%s" doesn\'t exist.' % self
-                raise RuntimeError(message)
+            if bucket not in self.buckets:
+                if not ignore:
+                    message = 'Bucket "%s" doesn\'t exist.' % bucket
+                    raise RuntimeError(message)
 
-            # Remove from schemas
-            if table in self.__schemas:
-                del self.__schemas[table]
+            # Remove from buckets
+            if bucket in self.__descriptors:
+                del self.__descriptors[bucket]
 
-            # Add table to dbtables
-            dbtable = self.__get_dbtable(table)
-            dbtables.append(dbtable)
+            # Add table to tables
+            table = self.__get_table(bucket)
+            tables.append(table)
 
         # Drop tables, update metadata
-        self.__metadata.drop_all(tables=dbtables)
+        self.__metadata.drop_all(tables=tables)
         self.__metadata.clear()
         self.__metadata.reflect()
 
-    def describe(self, table):
-        """Return table's JSONTableSchema schema.
+    def describe(self, bucket, descriptor=None):
 
-        Parameters
-        ----------
-        table: str
-            Table name.
+        # Set descriptor
+        if descriptor is not None:
+            self.__descriptors[bucket] = descriptor
 
-        Returns
-        -------
-        dict
-            JSONTableSchema schema.
-
-        """
-
-        # Get schema
-        if table in self.__schemas:
-            schema = self.__schemas[table]
+        # Get descriptor
         else:
-            dbtable = self.__get_dbtable(table)
-            table = mappers.convert_table(self.__prefix, table)
-            schema = mappers.restore_schema(
-                    self.__prefix, table, dbtable.columns, dbtable.constraints)
+            descriptor = self.__descriptors.get(bucket)
+            if descriptor is None:
+                table = self.__get_table(bucket)
+                descriptor = mappers.columns_and_constraints_to_descriptor(
+                    self.__prefix, table.name, table.columns, table.constraints)
 
-        return schema
+        return descriptor
 
-    def read(self, table):
-        """Read data from table.
-
-        Parameters
-        ----------
-        table: str
-            Table name.
-
-        Returns
-        -------
-        generator
-            Data tuples generator.
-
-        """
+    def iter(self, bucket):
 
         # Get result
-        dbtable = self.__get_dbtable(table)
+        table = self.__get_table(bucket)
         # Streaming could be not working for some backends:
         # http://docs.sqlalchemy.org/en/latest/core/connections.html
-        select = dbtable.select().execution_options(stream_results=True)
+        select = table.select().execution_options(stream_results=True)
         result = select.execute()
 
         # Yield data
         for row in result:
-            yield row
+            yield list(row)
 
-    def write(self, table, data):
-        """Write data to table.
+    def read(self, bucket):
 
-        Parameters
-        ----------
-        table: str
-            Table name.
-        data: list
-            List of data tuples.
+        # Get rows
+        rows = list(self.iter(bucket))
 
-        """
-        BUFFER_ROWS = 1000
+        return rows
+
+    def write(self, bucket, rows):
 
         # Prepare
-        schema = self.describe(table)
-        model = SchemaModel(schema)
-        dbtable = self.__get_dbtable(table)
+        BUFFER_SIZE = 1000
+        descriptor = self.describe(bucket)
+        schema = jsontableschema.Schema(descriptor)
+        table = self.__get_table(bucket)
 
         # Write
         with self.__connection.begin():
-            rows = []
-            for row in data:
-                row_dict = {}
-                for index, field in enumerate(model.fields):
+            keyed_rows = []
+            for row in rows:
+                keyed_row = {}
+                for index, field in enumerate(schema.fields):
                     value = row[index]
                     try:
-                        value = model.cast(field['name'], value)
+                        value = field.cast_value(value)
                     except InvalidObjectType:
                         value = json.loads(value)
-                    row_dict[field['name']] = value
-                rows.append(row_dict)
-                if len(rows) > BUFFER_ROWS:
+                    keyed_row[field.name] = value
+                keyed_rows.append(keyed_row)
+                if len(keyed_rows) > BUFFER_SIZE:
                     # Insert data
-                    dbtable.insert().execute(rows)
+                    table.insert().execute(keyed_rows)
                     # Clean memory
-                    rows = []
-            if len(rows) > 0:
+                    keyed_rows = []
+            if len(keyed_rows) > 0:
                 # Insert data
-                dbtable.insert().execute(rows)
+                table.insert().execute(keyed_rows)
 
     # Private
 
-    def __get_dbtable(self, table):
-        """Return dbtable instance from metadata.
+    def __get_table(self, bucket):
+        """Return SQLAlchemy table for the given bucket.
         """
 
-        # Prepare dict key
-        key = mappers.convert_table(self.__prefix, table)
+        # Prepare name
+        tablename = mappers.bucket_to_tablename(self.__prefix, bucket)
         if self.__dbschema:
-            # TODO: Start to test dbschema parameter
-            key = '.'.join(self.__dbschema, key)  # pragma: no cover
+            tablename = '.'.join(self.__dbschema, tablename)
 
-        return self.__metadata.tables[key]
+        return self.__metadata.tables[tablename]

@@ -10,12 +10,11 @@ import json
 import pytest
 from copy import deepcopy
 from decimal import Decimal
-from tabulator import topen
+from tabulator import Stream
+from jsontableschema import Schema
 from sqlalchemy import create_engine
-from jsontableschema.model import SchemaModel
-from dotenv import load_dotenv; load_dotenv('.env')
-
 from jsontableschema_sql import Storage
+from dotenv import load_dotenv; load_dotenv('.env')
 
 
 # Tests
@@ -25,8 +24,8 @@ def test_storage():
     # Get resources
     articles_schema = json.load(io.open('data/articles.json', encoding='utf-8'))
     comments_schema = json.load(io.open('data/comments.json', encoding='utf-8'))
-    articles_data = topen('data/articles.csv', with_headers=True).read()
-    comments_data = topen('data/comments.csv', with_headers=True).read()
+    articles_data = Stream('data/articles.csv', headers=1).open().read()
+    comments_data = Stream('data/comments.csv', headers=1).open().read()
 
     # Engine
     engine = create_engine(os.environ['DATABASE_URL'])
@@ -79,7 +78,7 @@ def test_storage_bigdata():
 
     # Generate schema/data
     schema = {'fields': [{'name': 'id', 'type': 'integer'}]}
-    data = [(value,) for value in range(0, 2500)]
+    data = [[value,] for value in range(0, 2500)]
 
     # Push data
     engine = create_engine(os.environ['DATABASE_URL'])
@@ -125,9 +124,10 @@ def convert_schema(schema):
             del field['format']
     return schema
 
+
 def convert_data(schema, data):
     result = []
-    model = SchemaModel(schema)
+    schema = Schema(schema)
     for item in data:
-        result.append(tuple(model.convert_row(*item)))
+        result.append(schema.cast_row(item))
     return result

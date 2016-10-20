@@ -6,34 +6,40 @@ from __future__ import unicode_literals
 
 import pytest
 from mock import Mock
-
 from jsontableschema_sql import mappers
 
 
 # Tests
 
-def test_convert_table():
-    assert mappers.convert_table('prefix_', 'table') == 'prefix_table'
+def test_bucket_to_tablename():
+    assert mappers.bucket_to_tablename('prefix_', 'bucket') == 'prefix_bucket'
 
 
-def test_restore_table():
-    assert mappers.restore_table('prefix_', 'prefix_table') == 'table'
-    assert mappers.restore_table('prefix_', 'xxxxxx_table') == None
+def test_tablename_to_bucket():
+    assert mappers.tablename_to_bucket('prefix_', 'prefix_bucket') == 'bucket'
+    assert mappers.tablename_to_bucket('prefix_', 'xxxxxx_bucket') == None
 
 
-def test_convert_schema_not_supported_type():
+def test_descriptor_to_columns_and_constraints_not_supported_type():
+    descriptor = {
+        'fields': [{'name': 'name', 'type': 'not_supported'}],
+    }
     with pytest.raises(TypeError):
-        mappers.convert_schema('prefix_', 'table', {
-            'fields': [{'name': 'name', 'type': 'not_supported'}]})
+        mappers.descriptor_to_columns_and_constraints(
+            'prefix_', 'bucket', descriptor)
 
 
-def test_convert_schema_not_supported_reference():
+def test_descriptor_to_columns_and_constraints_not_supported_reference():
+    descriptor = {
+        'foreignKeys': [{'fields': '', 'reference': {'resource': 'not_supported'}}],
+        'fields': [],
+    }
     with pytest.raises(ValueError):
-        mappers.convert_schema('prefix_', 'table', {
-            'foreignKeys': [{'fields': '', 'reference': {'resource': 'not_supported'}}],
-            'fields': []})
+        mappers.descriptor_to_columns_and_constraints(
+            'prefix_', 'bucket', descriptor)
 
 
-def test_restore_schema_not_supported_tupe():
+def test_columns_and_constraints_to_descriptor_not_supported_type():
     with pytest.raises(TypeError):
-        mappers.restore_schema('prefix_', 'table', [Mock()], [])
+        mappers.columns_and_constraints_to_descriptor(
+            'prefix_', 'tablename', [Mock()], [])

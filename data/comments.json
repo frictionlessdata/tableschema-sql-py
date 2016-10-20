@@ -6,8 +6,8 @@
             "fields": "entry_id",
             "reference": {
                 "fields": "id",
-                "resource": "<table>",
-                "table": "articles"
+                "resource": "<bucket>",
+                "bucket": "articles"
             }
         }
     ],

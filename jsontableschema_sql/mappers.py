@@ -5,34 +5,36 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import six
-from sqlalchemy import (PrimaryKeyConstraint, ForeignKeyConstraint,
-    Column, Text, VARCHAR,  Float, Integer, Boolean, Date, Time, DateTime)
+from sqlalchemy import (
+    Column, PrimaryKeyConstraint, ForeignKeyConstraint,
+    Text, VARCHAR,  Float, Integer, Boolean, Date, Time, DateTime)
 from sqlalchemy.dialects.postgresql import ARRAY, JSON, JSONB, UUID
 
 
 # Module API
 
-def convert_table(prefix, table):
-    """Convert high-level table name to database name.
+def bucket_to_tablename(prefix, bucket):
+    """Convert bucket to SQLAlchemy tablename.
     """
-    return prefix + table
+    return prefix + bucket
 
 
-def restore_table(prefix, table):
-    """Restore database table name to high-level name.
+def tablename_to_bucket(prefix, tablename):
+    """Convert SQLAlchemy tablename to bucket.
     """
-    if table.startswith(prefix):
-        return table.replace(prefix, '', 1)
+    if tablename.startswith(prefix):
+        return tablename.replace(prefix, '', 1)
     return None
 
 
-def convert_schema(prefix, table, schema):  # noqa
-    """Convert JSONTableSchema schema to SQLAlchemy columns and constraints.
+def descriptor_to_columns_and_constraints(prefix, bucket, descriptor):
+    """Convert descriptor to SQLAlchemy columns and constraints.
     """
 
     # Init
     columns = []
     constraints = []
+    tablename = bucket_to_tablename(prefix, bucket)
 
     # Mapping
     mapping = {
@@ -49,7 +51,7 @@ def convert_schema(prefix, table, schema):  # noqa
     }
 
     # Fields
-    for field in schema['fields']:
+    for field in descriptor['fields']:
         try:
             column_type = mapping[field['type']]
         except KeyError:
@@ -61,7 +63,7 @@ def convert_schema(prefix, table, schema):  # noqa
         columns.append(column)
 
     # Primary key
-    pk = schema.get('primaryKey', None)
+    pk = descriptor.get('primaryKey', None)
     if pk is not None:
         if isinstance(pk, six.string_types):
             pk = [pk]
@@ -69,23 +71,21 @@ def convert_schema(prefix, table, schema):  # noqa
         constraints.append(constraint)
 
     # Foreign keys
-    fks = schema.get('foreignKeys', [])
+    fks = descriptor.get('foreignKeys', [])
     for fk in fks:
         fields = fk['fields']
         if isinstance(fields, six.string_types):
             fields = [fields]
         resource = fk['reference']['resource']
-        if resource == 'self':
-            resource = table
-        elif resource == '<table>':
-            resource = convert_table(prefix, fk['reference']['table'])
-        else:
-            message = 'Supported only "self" and "<table>" references.'
+        if resource == '<bucket>':
+            tablename = bucket_to_tablename(prefix, fk['reference']['bucket'])
+        elif resource != 'self':
+            message = 'Supported only "self" and "<bucket>" references.'
             raise ValueError(message)
         references = fk['reference']['fields']
         if isinstance(references, six.string_types):
             references = [references]
-        joiner = lambda reference: '.'.join([resource, reference])  # noqa
+        joiner = lambda reference: '.'.join([tablename, reference])
         references = list(map(joiner, references))
         constraint = ForeignKeyConstraint(fields, references)
         constraints.append(constraint)
@@ -93,8 +93,8 @@ def convert_schema(prefix, table, schema):  # noqa
     return (columns, constraints)
 
 
-def restore_schema(prefix, table, columns, constraints):  # noqa
-    """Convert SQLAlchemy columns and constraints to JSONTableSchema schema.
+def columns_and_constraints_to_descriptor(prefix, tablename, columns, constraints):
+    """Convert SQLAlchemy columns and constraints to descriptor.
     """
 
     # Init
@@ -149,17 +149,17 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
     for constraint in constraints:
         if isinstance(constraint, ForeignKeyConstraint):
             fields = []
-            reftable = None
+            bucket = None
             resource = None
             references = []
             for element in constraint.elements:
                 fields.append(element.parent.name)
                 references.append(element.column.name)
-                if element.column.table.name == table:
+                if element.column.table.name == tablename:
                     resource = 'self'
                 else:
-                    reftable = restore_table(
-                            prefix, element.column.table.name)
+                    bucket = tablename_to_bucket(
+                        prefix, element.column.table.name)
             if len(fields) == len(references) == 1:
                 fields = fields.pop()
                 references = references.pop()
@@ -171,9 +171,9 @@ def restore_schema(prefix, table, columns, constraints):  # noqa
             }
             if resource is not None:
                 fk['reference']['resource'] = resource
-            if reftable is not None:
-                fk['reference']['resource'] = '<table>'
-                fk['reference']['table'] = reftable
+            if bucket is not None:
+                fk['reference']['resource'] = '<bucket>'
+                fk['reference']['bucket'] = bucket
             fks.append(fk)
     if len(fks) > 0:
         schema['foreignKeys'] = fks

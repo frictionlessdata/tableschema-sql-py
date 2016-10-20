@@ -6,8 +6,8 @@ from __future__ import unicode_literals
 
 import six
 from sqlalchemy import (
-        Column, Text, VARCHAR,  Float, Integer, Boolean, Date, Time, DateTime,
-        PrimaryKeyConstraint, ForeignKeyConstraint)
+    Column, Text, VARCHAR,  Float, Integer, Boolean, Date, Time, DateTime,
+    PrimaryKeyConstraint, ForeignKeyConstraint)
 from sqlalchemy.dialects.postgres import ARRAY, JSON, JSONB, UUID
 
 

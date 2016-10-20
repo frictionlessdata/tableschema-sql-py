@@ -18,14 +18,10 @@ from . import mappers
 class Storage(object):
     """SQL Tabular Storage.
 
-    Parameters
-    ----------
-    engine: object
-        SQLAlchemy engine.
-    dbschema: str
-        Database schema name.
-    prefix: str
-        Prefix for all tables.
+    Args:
+        engine (object): SQLAlchemy engine
+        dbschema (str): database schema name
+        prefix (str): prefix for all tables
 
     """
 
@@ -82,17 +78,12 @@ class Storage(object):
     def create(self, table, schema, force=False):
         """Create table by schema.
 
-        Parameters
-        ----------
-        table: str/list
-            Table name or list of table names.
-        schema: dict/list
-            JSONTableSchema schema or list of schemas.
+        Args:
+            table (str/list): table name or list of table names
+            schema (dict/list): JSONTableSchema schema or list of schemas
 
-        Raises
-        ------
-        RuntimeError
-            If table already exists.
+        Raises:
+            RuntimeError: if table already exists
 
         """
 
@@ -130,15 +121,11 @@ class Storage(object):
     def delete(self, table=None, ignore=False):
         """Delete table.
 
-        Parameters
-        ----------
-        table: str/list
-            Table name or list of table names.
+        Args:
+            table (str/list): table name or list of table names
 
-        Raises
-        ------
-        RuntimeError
-            If table doesn't exist.
+        Raises:
+            RuntimeError: if table doesn't exist
 
         """
 
@@ -172,15 +159,11 @@ class Storage(object):
     def describe(self, table, schema=None):
         """Return table's JSONTableSchema schema.
 
-        Parameters
-        ----------
-        table: str
-            Table name.
+        Args:
+            table (str): table name
 
-        Returns
-        -------
-        dict
-            JSONTableSchema schema.
+        Returns:
+            dict: JSONTableSchema schema
 
         """
 
@@ -198,15 +181,11 @@ class Storage(object):
     def read(self, table):
         """Read data from table.
 
-        Parameters
-        ----------
-        table: str
-            Table name.
+        Args:
+            table (str): table name
 
-        Returns
-        -------
-        generator
-            Data tuples generator.
+        Returns:
+            generator: data tuples generator
 
         """
 
@@ -226,12 +205,9 @@ class Storage(object):
     def write(self, table, data):
         """Write data to table.
 
-        Parameters
-        ----------
-        table: str
-            Table name.
-        data: list
-            List of data tuples.
+        Args:
+            table (str): table name
+            data (list): list of data tuples
 
         """
         BUFFER_ROWS = 1000

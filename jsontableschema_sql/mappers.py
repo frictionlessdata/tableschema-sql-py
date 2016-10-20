@@ -77,17 +77,14 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor):
         if isinstance(fields, six.string_types):
             fields = [fields]
         resource = fk['reference']['resource']
-        if resource == '<bucket>':
-            tablename = bucket_to_tablename(prefix, fk['reference']['bucket'])
-        elif resource != 'self':
-            message = 'Supported only "self" and "<bucket>" references.'
-            raise ValueError(message)
-        references = fk['reference']['fields']
-        if isinstance(references, six.string_types):
-            references = [references]
-        joiner = lambda reference: '.'.join([tablename, reference])
-        references = list(map(joiner, references))
-        constraint = ForeignKeyConstraint(fields, references)
+        foreign_fields = fk['reference']['fields']
+        if resource != 'self':
+            tablename = bucket_to_tablename(prefix, resource)
+        if isinstance(foreign_fields, six.string_types):
+            foreign_fields = [foreign_fields]
+        composer = lambda field: '.'.join([tablename, field])
+        foreign_fields = list(map(composer, foreign_fields))
+        constraint = ForeignKeyConstraint(fields, foreign_fields)
         constraints.append(constraint)
 
     return (columns, constraints)
@@ -151,24 +148,21 @@ def columns_and_constraints_to_descriptor(prefix, tablename, columns, constraint
             fields = []
             bucket = None
             resource = None
-            references = []
+            foreign_fields = []
             for element in constraint.elements:
                 fields.append(element.parent.name)
-                references.append(element.column.name)
+                foreign_fields.append(element.column.name)
                 if element.column.table.name == tablename:
                     resource = 'self'
                 else:
-                    bucket = tablename_to_bucket(
-                        prefix, element.column.table.name)
-            if len(fields) == len(references) == 1:
+                    resource = tablename_to_bucket(prefix, element.column.table.name)
+            if len(fields) == len(foreign_fields) == 1:
                 fields = fields.pop()
-                references = references.pop()
-            fk = {'fields': fields, 'reference': {'fields': references}}
-            if resource is not None:
-                fk['reference']['resource'] = resource
-            if bucket is not None:
-                fk['reference']['resource'] = '<bucket>'
-                fk['reference']['bucket'] = bucket
+                foreign_fields = foreign_fields.pop()
+            fk = {
+                'fields': fields,
+                'reference': {'resource': resource, 'fields': foreign_fields},
+            }
             fks.append(fk)
     if len(fks) > 0:
         schema['foreignKeys'] = fks

@@ -29,16 +29,6 @@ def test_descriptor_to_columns_and_constraints_not_supported_type():
             'prefix_', 'bucket', descriptor)
 
 
-def test_descriptor_to_columns_and_constraints_not_supported_reference():
-    descriptor = {
-        'foreignKeys': [{'fields': '', 'reference': {'resource': 'not_supported'}}],
-        'fields': [],
-    }
-    with pytest.raises(ValueError):
-        mappers.descriptor_to_columns_and_constraints(
-            'prefix_', 'bucket', descriptor)
-
-
 def test_columns_and_constraints_to_descriptor_not_supported_type():
     with pytest.raises(TypeError):
         mappers.columns_and_constraints_to_descriptor(

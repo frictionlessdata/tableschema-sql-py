@@ -4,8 +4,8 @@
         {
             "fields": "parent",
             "reference": {
-                "fields": "id",
-                "resource": "self"
+                "resource": "self",
+                "fields": "id"
             }
         }
     ],

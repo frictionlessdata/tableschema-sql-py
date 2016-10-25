@@ -23,8 +23,8 @@ NAME = PACKAGE.replace('_', '-')
 INSTALL_REQUIRES = [
     'six>=1.9,<2.0a',
     'sqlalchemy>=1.0,<2.0a',
-    'jsontableschema>=0.7,<0.8a',
-    'tabulator>=0.7,<0.8a',
+    'jsontableschema>=0.7,<1.0a',
+    'tabulator>=0.7,<1.0a',
 ]
 TESTS_REQUIRE = [
     'pylama',

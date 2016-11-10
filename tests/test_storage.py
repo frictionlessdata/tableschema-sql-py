@@ -9,7 +9,6 @@ import io
 import json
 import pytest
 from copy import deepcopy
-from decimal import Decimal
 from tabulator import Stream
 from jsontableschema import Schema
 from sqlalchemy import create_engine
@@ -38,8 +37,9 @@ def test_storage():
 
     # Create buckets
     storage.create(
-        ['articles', 'comments'],
-        [articles_descriptor, comments_descriptor])
+            ['articles', 'comments'],
+            [articles_descriptor, comments_descriptor],
+            indexes_fields=[[['rating'], ['name'], ['created_datetime']], []])
 
     # Recreate bucket
     storage.create('comments', comments_descriptor, force=True)
@@ -73,8 +73,40 @@ def test_storage():
     with pytest.raises(RuntimeError):
         storage.delete('non_existent')
 
+
     # Delete buckets
     storage.delete()
+
+
+def test_only_parameter():
+    # Check the 'only' parameter
+
+    # Get resources
+    simple_descriptor = json.load(io.open('data/simple.json', encoding='utf-8'))
+
+    # Engine
+    engine = create_engine(os.environ['DATABASE_URL'], echo=True)
+
+    # Storage
+    storage = Storage(engine=engine, prefix='test_only_')
+
+    # Delete buckets
+    storage.delete()
+
+    # Create buckets
+    storage.create(
+            'names',
+            simple_descriptor,
+            indexes_fields=[['person_id']])
+
+    def only(table):
+        ret = 'name' not in table
+        return ret
+    engine = create_engine(os.environ['DATABASE_URL'], echo=True)
+    storage = Storage(engine=engine, prefix='test_only_', reflect_only=only)
+    # Delete non existent bucket
+    with pytest.raises(RuntimeError):
+        storage.delete('names')
 
 
 def test_storage_bigdata():

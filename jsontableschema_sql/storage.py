@@ -7,9 +7,6 @@ from __future__ import unicode_literals
 import six
 import json
 import jsontableschema
-from future.utils import raise_with_traceback
-from jsontableschema import storage as base
-from jsontableschema.model import SchemaModel
 from jsontableschema.exceptions import InvalidObjectType
 from sqlalchemy import Table, MetaData
 from . import mappers
@@ -26,24 +23,29 @@ class Storage(object):
         engine (object): SQLAlchemy engine
         dbschema (str): database schema name
         prefix (str): prefix for all buckets
-
+        reflect_only (callable): a boolean predicate to filter
+            the list of table names when reflecting
     """
 
     # Public
 
-    def __init__(self, engine, dbschema=None, prefix=''):
+    def __init__(self, engine, dbschema=None, prefix='', reflect_only=None):
 
         # Set attributes
         self.__connection = engine.connect()
         self.__dbschema = dbschema
         self.__prefix = prefix
         self.__descriptors = {}
+        if reflect_only is not None:
+            self.__only = reflect_only
+        else:
+            self.__only = lambda _: True
 
         # Create metadata
         self.__metadata = MetaData(
             bind=self.__connection,
-            schema=self.__dbschema,
-            reflect=True)
+            schema=self.__dbschema)
+        self.__reflect()
 
     def __repr__(self):
 
@@ -67,7 +69,24 @@ class Storage(object):
 
         return buckets
 
-    def create(self, bucket, descriptor, force=False, indexes_fields=[]):
+    def create(self, bucket, descriptor, force=False, indexes_fields=None):
+        """Create table by schema.
+
+        Parameters
+        ----------
+        table: str/list
+            Table name or list of table names.
+        schema: dict/list
+            JSONTableSchema schema or list of schemas.
+        indexes_fields: list
+            list of tuples containing field names, or list of such lists
+
+        Raises
+        ------
+        RuntimeError
+            If table already exists.
+
+        """
 
         # Make lists
         buckets = bucket
@@ -76,8 +95,12 @@ class Storage(object):
         descriptors = descriptor
         if isinstance(descriptor, dict):
             descriptors = [descriptor]
-        if len(indexes_fields) == 0 or not isinstance(indexes_fields[0], list):
+        if indexes_fields is None or len(indexes_fields) == 0:
+            indexes_fields = [()] * len(descriptors)
+        elif type(indexes_fields[0][0]) not in {list, tuple}:
             indexes_fields = [indexes_fields]
+        assert len(indexes_fields) == len(descriptors)
+        assert len(buckets) == len(descriptors)
 
         # Check buckets for existence
         for bucket in reversed(self.buckets):
@@ -133,7 +156,7 @@ class Storage(object):
         # Drop tables, update metadata
         self.__metadata.drop_all(tables=tables)
         self.__metadata.clear()
-        self.__metadata.reflect()
+        self.__reflect()
 
     def describe(self, bucket, descriptor=None):
 
@@ -201,7 +224,6 @@ class Storage(object):
                 # Insert data
                 table.insert().execute(keyed_rows)
 
-
     # Private
 
     def __get_table(self, bucket):
@@ -214,3 +236,13 @@ class Storage(object):
             tablename = '.'.join(self.__dbschema, tablename)
 
         return self.__metadata.tables[tablename]
+
+    def __reflect(self):
+        def only(name, _):
+            ret = (
+                self.__only(name) and
+                mappers.tablename_to_bucket(self.__prefix, name) is not None
+            )
+            return ret
+
+        self.__metadata.reflect(only=only)

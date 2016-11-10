@@ -52,16 +52,6 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor, index_fiel
         'geojson': JSONB,
     }
 
-    # Primary key
-    pk = schema.get('primaryKey', None)
-    if pk is not None:
-        if isinstance(pk, six.string_types):
-            pk = [pk]
-        constraint = PrimaryKeyConstraint(*pk)
-        constraints.append(constraint)
-    else:
-        pk = []
-
     # Fields
     for field in descriptor['fields']:
         try:
@@ -77,7 +67,7 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor, index_fiel
 
     # Indexes
     for i, index_definition in enumerate(index_fields):
-        name = table + '_ix%03d' % i
+        name = tablename + '_ix%03d' % i
         index_columns = [column_mapping[field_name] for field_name in index_definition]
         indexes.append(Index(name, *index_columns))
 

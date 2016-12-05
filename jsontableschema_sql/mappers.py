@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 import six
 from sqlalchemy import (
-    Column, PrimaryKeyConstraint, ForeignKeyConstraint,
+    Column, PrimaryKeyConstraint, ForeignKeyConstraint, Index,
     Text, VARCHAR,  Float, Integer, Boolean, Date, Time, DateTime)
 from sqlalchemy.dialects.postgresql import ARRAY, JSON, JSONB, UUID
 
@@ -27,13 +27,15 @@ def tablename_to_bucket(prefix, tablename):
     return None
 
 
-def descriptor_to_columns_and_constraints(prefix, bucket, descriptor):
+def descriptor_to_columns_and_constraints(prefix, bucket, descriptor, index_fields):
     """Convert descriptor to SQLAlchemy columns and constraints.
     """
 
     # Init
     columns = []
+    column_mapping = {}
     constraints = []
+    indexes = []
     tablename = bucket_to_tablename(prefix, bucket)
 
     # Mapping
@@ -61,6 +63,13 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor):
         nullable = not field.get('constraints', {}).get('required', False)
         column = Column(field['name'], column_type, nullable=nullable)
         columns.append(column)
+        column_mapping[field['name']] = column
+
+    # Indexes
+    for i, index_definition in enumerate(index_fields):
+        name = tablename + '_ix%03d' % i
+        index_columns = [column_mapping[field_name] for field_name in index_definition]
+        indexes.append(Index(name, *index_columns))
 
     # Primary key
     pk = descriptor.get('primaryKey', None)
@@ -87,7 +96,7 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor):
         constraint = ForeignKeyConstraint(fields, foreign_fields)
         constraints.append(constraint)
 
-    return (columns, constraints)
+    return (columns, constraints, indexes)
 
 
 def columns_and_constraints_to_descriptor(prefix, tablename, columns, constraints):

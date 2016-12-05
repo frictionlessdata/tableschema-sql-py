@@ -17,7 +17,7 @@ def test_bucket_to_tablename():
 
 def test_tablename_to_bucket():
     assert mappers.tablename_to_bucket('prefix_', 'prefix_bucket') == 'bucket'
-    assert mappers.tablename_to_bucket('prefix_', 'xxxxxx_bucket') == None
+    assert mappers.tablename_to_bucket('prefix_', 'xxxxxx_bucket') is None
 
 
 def test_descriptor_to_columns_and_constraints_not_supported_type():
@@ -26,7 +26,7 @@ def test_descriptor_to_columns_and_constraints_not_supported_type():
     }
     with pytest.raises(TypeError):
         mappers.descriptor_to_columns_and_constraints(
-            'prefix_', 'bucket', descriptor)
+            'prefix_', 'bucket', descriptor, [])
 
 
 def test_columns_and_constraints_to_descriptor_not_supported_type():

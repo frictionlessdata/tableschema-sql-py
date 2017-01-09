@@ -233,7 +233,7 @@ class Storage(object):
         # Prepare name
         tablename = mappers.bucket_to_tablename(self.__prefix, bucket)
         if self.__dbschema:
-            tablename = '.'.join(self.__dbschema, tablename)
+            tablename = '.'.join((self.__dbschema, tablename))
 
         return self.__metadata.tables[tablename]
 

@@ -46,7 +46,9 @@ def test_storage():
 
     # Write data to buckets
     storage.write('articles', articles_rows)
-    storage.write('comments', comments_rows)
+    gen = storage.write('comments', comments_rows, as_generator=True)
+    lst = list(gen)
+    assert len(lst) == 1
 
     # Create new storage to use reflection only
     storage = Storage(engine=engine, prefix='test_storage_')
@@ -113,16 +115,16 @@ def test_storage_bigdata():
 
     # Generate schema/data
     descriptor = {'fields': [{'name': 'id', 'type': 'integer'}]}
-    rows = [[value,] for value in range(0, 2500)]
+    rows = [{'id': value} for value in range(0, 2500)]
 
     # Push rows
     engine = create_engine(os.environ['DATABASE_URL'])
     storage = Storage(engine=engine, prefix='test_storage_bigdata_')
     storage.create('bucket', descriptor, force=True)
-    storage.write('bucket', rows)
+    storage.write('bucket', rows, keyed=True)
 
     # Pull rows
-    assert list(storage.read('bucket')) == rows
+    assert list(storage.read('bucket')) == list(map(lambda x: [x['id']], rows))
 
 
 def test_storage_bigdata_rollback():

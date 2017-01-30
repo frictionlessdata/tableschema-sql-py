@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 import six
 import json
+import collections
 import jsontableschema
 from jsontableschema.exceptions import InvalidObjectType
 from sqlalchemy import Table, MetaData
@@ -194,7 +195,15 @@ class Storage(object):
 
         return rows
 
-    def write(self, bucket, rows):
+    def write(self, bucket, rows, keyed=False, as_generator=False):
+        gen = self.__write(bucket, rows, keyed=keyed)
+        if as_generator:
+            return gen
+        else:
+            collections.deque(gen, maxlen=0)
+
+    # Private
+    def __write(self, bucket, rows, keyed=False):
 
         # Prepare
         BUFFER_SIZE = 1000
@@ -206,25 +215,27 @@ class Storage(object):
         with self.__connection.begin():
             keyed_rows = []
             for row in rows:
-                keyed_row = {}
-                for index, field in enumerate(schema.fields):
-                    value = row[index]
-                    try:
-                        value = field.cast_value(value)
-                    except InvalidObjectType:
-                        value = json.loads(value)
-                    keyed_row[field.name] = value
+                if not keyed:
+                    keyed_row = {}
+                    for index, field in enumerate(schema.fields):
+                        value = row[index]
+                        try:
+                            value = field.cast_value(value)
+                        except InvalidObjectType:
+                            value = json.loads(value)
+                        keyed_row[field.name] = value
+                else:
+                    keyed_row = row
                 keyed_rows.append(keyed_row)
                 if len(keyed_rows) > BUFFER_SIZE:
                     # Insert data
                     table.insert().execute(keyed_rows)
                     # Clean memory
                     keyed_rows = []
+                yield keyed_row
             if len(keyed_rows) > 0:
                 # Insert data
                 table.insert().execute(keyed_rows)
-
-    # Private
 
     def __get_table(self, bucket):
         """Return SQLAlchemy table for the given bucket.

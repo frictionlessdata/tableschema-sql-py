@@ -25,6 +25,7 @@ INSTALL_REQUIRES = [
     'sqlalchemy>=1.0,<2.0a',
     'jsontableschema>=0.7,<1.0a',
     'tabulator>=0.7,<1.0a',
+    'pybloom_live==2.2.0'
 ]
 TESTS_REQUIRE = [
     'pylama',

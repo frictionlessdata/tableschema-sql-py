@@ -80,6 +80,50 @@ def test_storage():
     storage.delete()
 
 
+def test_update():
+
+    # Get resources
+    descriptor = json.load(io.open('data/original.json', encoding='utf-8'))
+    original_rows = Stream('data/original.csv', headers=1).open().read()
+    update_rows = Stream('data/update.csv', headers=1).open().read()
+    update_keys = ['person_id', 'name']
+
+    # Engine
+    engine = create_engine(os.environ['DATABASE_URL'])
+
+    # Storage
+    storage = Storage(engine=engine, prefix='test_update_')
+
+    # Delete buckets
+    storage.delete()
+
+    # Create buckets
+    storage.create('colors', descriptor)
+
+    # Write data to buckets
+    storage.write('colors', original_rows, update_keys=update_keys)
+    storage.write('colors', update_rows, update_keys=update_keys)
+
+    # Create new storage to use reflection only
+    storage = Storage(engine=engine, prefix='test_update_')
+
+    rows = list(storage.iter('colors'))
+
+    assert len(rows) == 6
+    color_by_person = dict(
+        (row[0], row[2])
+        for row in rows
+    )
+    assert color_by_person == {
+        1: 'blue',
+        2: 'green',
+        3: 'magenta',
+        4: 'sunshine',
+        5: 'peach',
+        6: 'grey'
+    }
+
+
 def test_only_parameter():
     # Check the 'only' parameter
 

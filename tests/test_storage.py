@@ -102,7 +102,10 @@ def test_update():
 
     # Write data to buckets
     storage.write('colors', original_rows, update_keys=update_keys)
-    storage.write('colors', update_rows, update_keys=update_keys)
+    gen = storage.write('colors', update_rows, update_keys=update_keys, as_generator=True)
+    gen = list(gen)
+    assert len(gen) == 5
+    assert len(list(filter(lambda i: i.updated, gen))) == 3
 
     # Create new storage to use reflection only
     storage = Storage(engine=engine, prefix='test_update_')

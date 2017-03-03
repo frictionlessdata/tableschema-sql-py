@@ -8,12 +8,14 @@ import json
 
 import pybloom_live
 from sqlalchemy import select
+from collections import namedtuple
 
 import jsontableschema
 from jsontableschema.exceptions import InvalidObjectType
 
 
 BUFFER_SIZE = 1000
+WrittenRow = namedtuple('WrittenRow', ['row', 'updated'])
 
 
 class StorageWriter(object):
@@ -41,13 +43,14 @@ class StorageWriter(object):
             if self.__check_existing(keyed_row):
                 self.__insert()
                 if self.__update(row):
+                    yield WrittenRow(keyed_row, True)
                     continue
 
             self.__buffer.append(keyed_row)
 
             if len(self.__buffer) > BUFFER_SIZE:
                 self.__insert()
-            yield keyed_row
+            yield WrittenRow(keyed_row, False)
 
         self.__insert()
 

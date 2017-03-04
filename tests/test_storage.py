@@ -92,7 +92,7 @@ def test_update():
     engine = create_engine(os.environ['DATABASE_URL'])
 
     # Storage
-    storage = Storage(engine=engine, prefix='test_update_')
+    storage = Storage(engine=engine, prefix='test_update_', autoincrement='_id')
 
     # Delete buckets
     storage.delete()
@@ -106,6 +106,7 @@ def test_update():
     gen = list(gen)
     assert len(gen) == 5
     assert len(list(filter(lambda i: i.updated, gen))) == 3
+    assert list(map(lambda i: i.updated_id, gen)) == [5, 3, 6, 4, 5]
 
     # Create new storage to use reflection only
     storage = Storage(engine=engine, prefix='test_update_')
@@ -114,7 +115,7 @@ def test_update():
 
     assert len(rows) == 6
     color_by_person = dict(
-        (row[0], row[2])
+        (row[1], row[3])
         for row in rows
     )
     assert color_by_person == {
@@ -125,6 +126,23 @@ def test_update():
         5: 'peach',
         6: 'grey'
     }
+
+def test_bad_type():
+
+    # Engine
+    engine = create_engine(os.environ['DATABASE_URL'])
+
+    # Storage
+    storage = Storage(engine=engine, prefix='test_bad_type_')
+    with pytest.raises(TypeError):
+        storage.create('bad_type', {
+            'fields': [
+                {
+                    'name': 'bad_field',
+                    'type': 'any'
+                }
+            ]
+        })
 
 
 def test_only_parameter():

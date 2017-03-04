@@ -29,13 +29,15 @@ class Storage(object):
 
     # Public
 
-    def __init__(self, engine, dbschema=None, prefix='', reflect_only=None):
+    def __init__(self, engine, dbschema=None, prefix='', reflect_only=None,
+                 autoincrement=None):
 
         # Set attributes
         self.__connection = engine.connect()
         self.__dbschema = dbschema
         self.__prefix = prefix
         self.__descriptors = {}
+        self.__autoincrement = autoincrement
         if reflect_only is not None:
             self.__only = reflect_only
         else:
@@ -120,7 +122,7 @@ class Storage(object):
             jsontableschema.validate(descriptor)
             tablename = mappers.bucket_to_tablename(self.__prefix, bucket)
             columns, constraints, indexes = mappers.descriptor_to_columns_and_constraints(
-                self.__prefix, bucket, descriptor, index_fields)
+                self.__prefix, bucket, descriptor, index_fields, self.__autoincrement)
             Table(tablename, self.__metadata, *(columns+constraints+indexes))
 
         # Create tables, update metadata
@@ -199,7 +201,7 @@ class Storage(object):
         table = self.__get_table(bucket)
         descriptor = self.describe(bucket)
 
-        writer = StorageWriter(table, descriptor, update_keys)
+        writer = StorageWriter(table, descriptor, update_keys, self.__autoincrement)
 
         with self.__connection.begin():
             gen = writer.write(rows, keyed)

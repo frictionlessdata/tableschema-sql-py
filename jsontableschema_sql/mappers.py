@@ -10,8 +10,8 @@ from sqlalchemy import (
     Text, VARCHAR,  Float, Integer, Boolean, Date, Time, DateTime)
 from sqlalchemy.dialects.postgresql import ARRAY, JSON, JSONB, UUID
 
-
 # Module API
+
 
 def bucket_to_tablename(prefix, bucket):
     """Convert bucket to SQLAlchemy tablename.
@@ -27,7 +27,8 @@ def tablename_to_bucket(prefix, tablename):
     return None
 
 
-def descriptor_to_columns_and_constraints(prefix, bucket, descriptor, index_fields):
+def descriptor_to_columns_and_constraints(prefix, bucket, descriptor,
+                                          index_fields, autoincrement):
     """Convert descriptor to SQLAlchemy columns and constraints.
     """
 
@@ -52,6 +53,8 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor, index_fiel
         'geojson': JSONB,
     }
 
+    if autoincrement is not None:
+        columns.append(Column(autoincrement, Integer, autoincrement=True, nullable=False))
     # Fields
     for field in descriptor['fields']:
         try:
@@ -76,6 +79,12 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor, index_fiel
     if pk is not None:
         if isinstance(pk, six.string_types):
             pk = [pk]
+    if autoincrement is not None:
+        if pk is not None:
+            pk = [autoincrement] + pk
+        else:
+            pk = [autoincrement]
+    if pk is not None:
         constraint = PrimaryKeyConstraint(*pk)
         constraints.append(constraint)
 

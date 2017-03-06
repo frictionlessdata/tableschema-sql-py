@@ -15,16 +15,17 @@ from jsontableschema.exceptions import InvalidObjectType
 
 
 BUFFER_SIZE = 1000
-WrittenRow = namedtuple('WrittenRow', ['row', 'updated'])
+WrittenRow = namedtuple('WrittenRow', ['row', 'updated', 'updated_id'])
 
 
 class StorageWriter(object):
 
-    def __init__(self, table, descriptor, update_keys):
+    def __init__(self, table, descriptor, update_keys, autoincrement):
 
         self.table = table
         self.descriptor = descriptor
         self.update_keys = update_keys
+        self.autoincrement = autoincrement
         if update_keys is not None:
             self.__prepare_bloom()
         self.__buffer = []
@@ -41,23 +42,39 @@ class StorageWriter(object):
             keyed_row = row
 
             if self.__check_existing(keyed_row):
-                self.__insert()
-                if self.__update(row):
-                    yield WrittenRow(keyed_row, True)
+                for wr in self.__insert():
+                    yield wr
+                ret = self.__update(row)
+                if ret > 0:
+                    yield WrittenRow(keyed_row,
+                                     True,
+                                     ret if self.autoincrement else None)
                     continue
 
             self.__buffer.append(keyed_row)
 
             if len(self.__buffer) > BUFFER_SIZE:
-                self.__insert()
-            yield WrittenRow(keyed_row, False)
+                for wr in self.__insert():
+                    yield wr
 
-        self.__insert()
+        for wr in self.__insert():
+            yield wr
 
     def __insert(self):
         if len(self.__buffer) > 0:
             # Insert data
-            self.table.insert().execute(self.__buffer)
+            statement = self.table.insert()
+            if self.autoincrement:
+                statement = statement.returning(getattr(self.table.c, self.autoincrement))
+                statement = statement.values(self.__buffer)
+                res = statement.execute()
+                for id, in res:
+                    row = self.__buffer.pop(0)
+                    yield WrittenRow(row, False, id)
+            else:
+                statement.execute(self.__buffer)
+                for row in self.__buffer:
+                    yield WrittenRow(row, False, None)
             # Clean memory
             self.__buffer = []
 
@@ -65,8 +82,14 @@ class StorageWriter(object):
         expr = self.table.update().values(row)
         for key in self.update_keys:
             expr = expr.where(getattr(self.table.c, key) == row[key])
+        expr = expr.returning(getattr(self.table.c, '_id'))
         res = expr.execute()
-        return res.rowcount > 0
+        if res.rowcount > 0:
+            first = next(iter(res))
+            last_row_id = first[0]
+            return last_row_id
+        else:
+            return 0
 
     @staticmethod
     def __convert_to_keyed(schema, row):

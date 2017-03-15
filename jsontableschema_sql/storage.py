@@ -172,7 +172,8 @@ class Storage(object):
             if descriptor is None:
                 table = self.__get_table(bucket)
                 descriptor = mappers.columns_and_constraints_to_descriptor(
-                    self.__prefix, table.name, table.columns, table.constraints)
+                    self.__prefix, table.name, table.columns, table.constraints,
+                    self.__autoincrement)
 
         return descriptor
 
@@ -180,14 +181,18 @@ class Storage(object):
 
         # Get result
         table = self.__get_table(bucket)
-        # Streaming could be not working for some backends:
-        # http://docs.sqlalchemy.org/en/latest/core/connections.html
-        select = table.select().execution_options(stream_results=True)
-        result = select.execute()
 
-        # Yield data
-        for row in result:
-            yield list(row)
+        # Make sure we close the transaction after iterating,
+        #   otherwise it is left hanging
+        with self.__connection.begin():
+            # Streaming could be not working for some backends:
+            # http://docs.sqlalchemy.org/en/latest/core/connections.html
+            select = table.select().execution_options(stream_results=True)
+            result = select.execute()
+
+            # Yield data
+            for row in result:
+                yield list(row)
 
     def read(self, bucket):
 
@@ -197,6 +202,9 @@ class Storage(object):
         return rows
 
     def write(self, bucket, rows, keyed=False, as_generator=False, update_keys=None):
+
+        if update_keys is not None and len(update_keys) == 0:
+            raise ValueError('update_keys cannot be an empty list')
 
         table = self.__get_table(bucket)
         descriptor = self.describe(bucket)

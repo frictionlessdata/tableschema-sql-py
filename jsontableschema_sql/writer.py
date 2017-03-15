@@ -45,7 +45,7 @@ class StorageWriter(object):
                 for wr in self.__insert():
                     yield wr
                 ret = self.__update(row)
-                if ret > 0:
+                if ret is not None:
                     yield WrittenRow(keyed_row,
                                      True,
                                      ret if self.autoincrement else None)
@@ -82,14 +82,18 @@ class StorageWriter(object):
         expr = self.table.update().values(row)
         for key in self.update_keys:
             expr = expr.where(getattr(self.table.c, key) == row[key])
-        expr = expr.returning(getattr(self.table.c, '_id'))
+        if self.autoincrement:
+            expr = expr.returning(getattr(self.table.c, self.autoincrement))
         res = expr.execute()
         if res.rowcount > 0:
-            first = next(iter(res))
-            last_row_id = first[0]
-            return last_row_id
+            if self.autoincrement:
+                first = next(iter(res))
+                last_row_id = first[0]
+                return last_row_id
+            else:
+                return 0
         else:
-            return 0
+            return None
 
     @staticmethod
     def __convert_to_keyed(schema, row):

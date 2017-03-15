@@ -108,7 +108,8 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor,
     return (columns, constraints, indexes)
 
 
-def columns_and_constraints_to_descriptor(prefix, tablename, columns, constraints):
+def columns_and_constraints_to_descriptor(prefix, tablename, columns,
+                                          constraints, autoincrement_column):
     """Convert SQLAlchemy columns and constraints to descriptor.
     """
 
@@ -134,6 +135,8 @@ def columns_and_constraints_to_descriptor(prefix, tablename, columns, constraint
     # Fields
     fields = []
     for column in columns:
+        if column.name == autoincrement_column:
+            continue
         field_type = None
         for key, value in mapping.items():
             if isinstance(column.type, key):
@@ -153,6 +156,8 @@ def columns_and_constraints_to_descriptor(prefix, tablename, columns, constraint
     for constraint in constraints:
         if isinstance(constraint, PrimaryKeyConstraint):
             for column in constraint.columns:
+                if column.name == autoincrement_column:
+                    continue
                 pk.append(column.name)
     if len(pk) > 0:
         if len(pk) == 1:

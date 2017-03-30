@@ -82,6 +82,7 @@ def test_storage():
 
 def test_update():
 
+
     # Get resources
     descriptor = json.load(io.open('data/original.json', encoding='utf-8'))
     original_rows = Stream('data/original.csv', headers=1).open().read()
@@ -92,7 +93,7 @@ def test_update():
     engine = create_engine(os.environ['DATABASE_URL'])
 
     # Storage
-    storage = Storage(engine=engine, prefix='test_update_', autoincrement='_id')
+    storage = Storage(engine=engine, prefix='test_update_', autoincrement='__id')
 
     # Delete buckets
     storage.delete()
@@ -100,12 +101,21 @@ def test_update():
     # Create buckets
     storage.create('colors', descriptor)
 
+
     # Write data to buckets
     storage.write('colors', original_rows, update_keys=update_keys)
+
     gen = storage.write('colors', update_rows, update_keys=update_keys, as_generator=True)
     gen = list(gen)
     assert len(gen) == 5
     assert len(list(filter(lambda i: i.updated, gen))) == 3
+    assert list(map(lambda i: i.updated_id, gen)) == [5, 3, 6, 4, 5]
+
+    storage = Storage(engine=engine, prefix='test_update_', autoincrement='__id')
+    gen = storage.write('colors', update_rows, update_keys=update_keys, as_generator=True)
+    gen = list(gen)
+    assert len(gen) == 5
+    assert len(list(filter(lambda i: i.updated, gen))) == 5
     assert list(map(lambda i: i.updated_id, gen)) == [5, 3, 6, 4, 5]
 
     # Create new storage to use reflection only
@@ -126,6 +136,19 @@ def test_update():
         5: 'peach',
         6: 'grey'
     }
+
+    # Storage without autoincrement
+    storage = Storage(engine=engine, prefix='test_update_')
+    storage.delete()
+    storage.create('colors', descriptor)
+
+    storage.write('colors', original_rows, update_keys=update_keys)
+    gen = storage.write('colors', update_rows, update_keys=update_keys, as_generator=True)
+    gen = list(gen)
+    assert len(gen) == 5
+    assert len(list(filter(lambda i: i.updated, gen))) == 3
+    assert list(map(lambda i: i.updated_id, gen)) == [None, None, None, None, None]
+
 
 def test_bad_type():
 

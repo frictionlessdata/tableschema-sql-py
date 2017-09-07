@@ -11,7 +11,7 @@ from tabulator import topen
 from sqlalchemy import create_engine
 from dotenv import load_dotenv; load_dotenv('.env')
 
-from jsontableschema_sql import Storage
+from tableschema_sql import Storage
 
 
 # Get resources

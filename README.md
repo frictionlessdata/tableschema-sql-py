@@ -18,7 +18,7 @@ Generate and load SQL tables based on JSON Table Schema descriptors.
 ### Installation
 
 ```bash
-pip install jsontableschema-sql
+pip install tableschema-sql
 ```
 
 ### Storage
@@ -29,7 +29,7 @@ SQLAlchemy is used as sql wrapper. We can get storage this way:
 
 ```python
 from sqlalchemy import create_engine
-from jsontableschema_sql import Storage
+from tableschema_sql import Storage
 
 engine = create_engine('sqlite:///:memory:', prefix='prefix')
 storage = Storage(engine)

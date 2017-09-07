@@ -18,15 +18,14 @@ def read(*paths):
 
 
 # Prepare
-PACKAGE = 'jsontableschema_sql'
+PACKAGE = 'tableschema_sql'
 NAME = PACKAGE.replace('_', '-')
 INSTALL_REQUIRES = [
     'six>=1.9,<2.0',
     'sqlalchemy>=1.0,<2.0',
     'pybloom_live>=2.2,<3.0',
     'tabulator>=1.0.0a5,<2.0',
-    # TODO: update after specs-v1
-    'jsontableschema>=0.7,<1.0',
+    'tableschema>=1.0,<2.0',
 ]
 TESTS_REQUIRE = [
     'pylama',
@@ -55,7 +54,7 @@ setup(
     description='Generate SQL tables, load and extract data, based on JSON Table Schema descriptors.',
     author='Open Knowledge Foundation',
     author_email='info@okfn.org',
-    url='https://github.com/frictionlessdata/jsontableschema-sql-py',
+    url='https://github.com/frictionlessdata/tableschema-sql-py',
     license='MIT',
     keywords=[
         'frictionless data',

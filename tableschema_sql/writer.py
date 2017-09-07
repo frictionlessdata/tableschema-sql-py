@@ -10,9 +10,8 @@ import pybloom_live
 from sqlalchemy import select
 from collections import namedtuple
 
-import jsontableschema
-from jsontableschema.exceptions import InvalidObjectType
-
+import tableschema
+from tableschema.exceptions import CastError
 
 BUFFER_SIZE = 1000
 WrittenRow = namedtuple('WrittenRow', ['row', 'updated', 'updated_id'])
@@ -32,7 +31,7 @@ class StorageWriter(object):
 
     def write(self, rows, keyed):
         # Prepare
-        schema = jsontableschema.Schema(self.descriptor)
+        schema = tableschema.Schema(self.descriptor)
 
         # Write
         for row in rows:
@@ -102,7 +101,7 @@ class StorageWriter(object):
             value = row[index]
             try:
                 value = field.cast_value(value)
-            except InvalidObjectType:
+            except CastError:
                 value = json.loads(value)
             keyed_row[field.name] = value
 

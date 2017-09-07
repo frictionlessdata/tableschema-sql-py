@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 import six
 import collections
-import jsontableschema
+import tableschema
 from sqlalchemy import Table, MetaData
 from . import mappers
 from .writer import StorageWriter
@@ -17,7 +17,7 @@ from .writer import StorageWriter
 class Storage(object):
     """SQL Tabular Storage.
 
-    It's an implementation of `jsontablescema.Storage`.
+    It's an implementation of `tablescema.Storage`.
 
     Args:
         engine (object): SQLAlchemy engine
@@ -119,7 +119,7 @@ class Storage(object):
             self.__descriptors[bucket] = descriptor
 
             # Create table
-            jsontableschema.validate(descriptor)
+            tableschema.validate(descriptor)
             tablename = mappers.bucket_to_tablename(self.__prefix, bucket)
             columns, constraints, indexes = mappers.descriptor_to_columns_and_constraints(
                 self.__prefix, bucket, descriptor, index_fields, self.__autoincrement)

@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 
 import pytest
 from mock import Mock
-from jsontableschema_sql import mappers
+from tableschema_sql import mappers
 
 
 # Tests

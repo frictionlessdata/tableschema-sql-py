@@ -10,9 +10,9 @@ import json
 import pytest
 from copy import deepcopy
 from tabulator import Stream
-from jsontableschema import Schema
+from tableschema import Schema
 from sqlalchemy import create_engine
-from jsontableschema_sql import Storage
+from tableschema_sql import Storage
 from dotenv import load_dotenv; load_dotenv('.env')
 
 

@@ -96,7 +96,7 @@ def descriptor_to_columns_and_constraints(prefix, bucket, descriptor,
         foreign_fields = fk['reference']['fields']
         if isinstance(fields, six.string_types):
             fields = [fields]
-        if resource != 'self':
+        if resource != '':
             tablename = bucket_to_tablename(prefix, resource)
         if isinstance(foreign_fields, six.string_types):
             foreign_fields = [foreign_fields]
@@ -169,7 +169,7 @@ def columns_and_constraints_to_descriptor(prefix, tablename, columns,
     for constraint in constraints:
         if isinstance(constraint, ForeignKeyConstraint):
             fields = []
-            resource = 'self'
+            resource = ''
             foreign_fields = []
             for element in constraint.elements:
                 fields.append(element.parent.name)

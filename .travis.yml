@@ -10,6 +10,9 @@ addons:
     packages:
       - pandoc
 
+services:
+  - mysql
+
 language:
   python
 
@@ -23,7 +26,12 @@ python:
 env:
   global:
     - TOXENV="py${PYTHON_VERSION//./}"
-    - DATABASE_URL=postgres://postgres@localhost:5432/postgres
+    - MYSQL_URL=mysql://root@localhost:3306/test
+    - POSTGRES_URL=postgresql://postgres@localhost:5432/postgres
+    - SQLITE_URL=sqlite:///:memory:
+
+before_install:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
 
 install:
   - make install

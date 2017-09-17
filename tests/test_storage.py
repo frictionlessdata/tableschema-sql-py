@@ -27,7 +27,7 @@ def test_storage():
     comments_rows = Stream('data/comments.csv', headers=1).open().read()
 
     # Engine
-    engine = create_engine(os.environ['DATABASE_URL'])
+    engine = create_engine(os.environ['POSTGRES_URL'])
 
     # Storage
     storage = Storage(engine=engine, prefix='test_storage_')
@@ -90,7 +90,7 @@ def test_storage_update():
     update_keys = ['person_id', 'name']
 
     # Engine
-    engine = create_engine(os.environ['DATABASE_URL'])
+    engine = create_engine(os.environ['POSTGRES_URL'])
 
     # Storage
     storage = Storage(engine=engine, prefix='test_update_', autoincrement='__id')
@@ -153,7 +153,7 @@ def test_storage_update():
 def test_storage_bad_type():
 
     # Engine
-    engine = create_engine(os.environ['DATABASE_URL'])
+    engine = create_engine(os.environ['POSTGRES_URL'])
 
     # Storage
     storage = Storage(engine=engine, prefix='test_bad_type_')
@@ -175,7 +175,7 @@ def test_storage_only_parameter():
     simple_descriptor = json.load(io.open('data/simple.json', encoding='utf-8'))
 
     # Engine
-    engine = create_engine(os.environ['DATABASE_URL'], echo=True)
+    engine = create_engine(os.environ['POSTGRES_URL'], echo=True)
 
     # Storage
     storage = Storage(engine=engine, prefix='test_only_')
@@ -192,7 +192,7 @@ def test_storage_only_parameter():
     def only(table):
         ret = 'name' not in table
         return ret
-    engine = create_engine(os.environ['DATABASE_URL'], echo=True)
+    engine = create_engine(os.environ['POSTGRES_URL'], echo=True)
     storage = Storage(engine=engine, prefix='test_only_', reflect_only=only)
     # Delete non existent bucket
     with pytest.raises(RuntimeError):
@@ -206,7 +206,7 @@ def test_storage_bigdata():
     rows = [{'id': value} for value in range(0, 2500)]
 
     # Push rows
-    engine = create_engine(os.environ['DATABASE_URL'])
+    engine = create_engine(os.environ['POSTGRES_URL'])
     storage = Storage(engine=engine, prefix='test_storage_bigdata_')
     storage.create('bucket', descriptor, force=True)
     storage.write('bucket', rows, keyed=True)
@@ -222,7 +222,7 @@ def test_storage_bigdata_rollback():
     rows = [(value,) for value in range(0, 2500)] + [('bad-value',)]
 
     # Push rows
-    engine = create_engine(os.environ['DATABASE_URL'])
+    engine = create_engine(os.environ['POSTGRES_URL'])
     storage = Storage(engine=engine, prefix='test_storage_bigdata_rollback_')
     storage.create('bucket', descriptor, force=True)
     try:

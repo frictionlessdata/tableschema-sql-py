@@ -80,7 +80,7 @@ def test_storage():
     storage.delete()
 
 
-def test_update():
+def test_storage_update():
 
 
     # Get resources
@@ -150,7 +150,7 @@ def test_update():
     assert list(map(lambda i: i.updated_id, gen)) == [None, None, None, None, None]
 
 
-def test_bad_type():
+def test_storage_bad_type():
 
     # Engine
     engine = create_engine(os.environ['DATABASE_URL'])
@@ -168,7 +168,7 @@ def test_bad_type():
         })
 
 
-def test_only_parameter():
+def test_storage_only_parameter():
     # Check the 'only' parameter
 
     # Get resources

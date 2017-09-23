@@ -1,78 +1,112 @@
-# jsontableschema-sql-py
+# tableschema-sql-py
 
-[![Travis](https://img.shields.io/travis/frictionlessdata/jsontableschema-sql-py/master.svg)](https://travis-ci.org/frictionlessdata/jsontableschema-sql-py)
-[![Coveralls](http://img.shields.io/coveralls/frictionlessdata/jsontableschema-sql-py/master.svg)](https://coveralls.io/r/frictionlessdata/jsontableschema-sql-py?branch=master)
-[![PyPi](https://img.shields.io/pypi/v/jsontableschema-sql.svg)](https://pypi.python.org/pypi/jsontableschema-sql)
-[![SemVer](https://img.shields.io/badge/versions-SemVer-brightgreen.svg)](http://semver.org/)
+[![Travis](https://img.shields.io/travis/frictionlessdata/tableschema-sql-py/master.svg)](https://travis-ci.org/frictionlessdata/tableschema-sql-py)
+[![Coveralls](http://img.shields.io/coveralls/frictionlessdata/tableschema-sql-py/master.svg)](https://coveralls.io/r/frictionlessdata/tableschema-sql-py?branch=master)
+[![PyPi](https://img.shields.io/pypi/v/tableschema-sql.svg)](https://pypi.python.org/pypi/tableschema-sql)
 [![Gitter](https://img.shields.io/gitter/room/frictionlessdata/chat.svg)](https://gitter.im/frictionlessdata/chat)
 
-Generate and load SQL tables based on JSON Table Schema descriptors.
+Generate and load SQL tables based on [Table Schema](http://specs.frictionlessdata.io/table-schema/) descriptors.
 
-> Version `v0.3` contains breaking changes:
-- renamed `Storage.tables` to `Storage.buckets`
-- changed `Storage.read` to read into memory
-- added `Storage.iter` to yield row by row
+## Features
+
+- implements `tableschema.Storage` interface
+- provides additional features like indexes and updating
 
 ## Getting Started
 
 ### Installation
 
+The package use semantic versioning. It means that major versions  could include breaking changes. It's highly recommended to specify `package` version range in your `setup/requirements` file e.g. `package>=1.0,<2.0`.
+
 ```bash
 pip install tableschema-sql
 ```
 
+### Examples
+
+Code examples in this readme requires Python 3.3+ interpreter. You could see even more example in [examples](https://github.com/frictionlessdata/tableschema-sql-py/tree/master/examples) directory.
+
+```python
+from tableschema import Table
+from sqlalchemy import create_engine
+
+# Load and save table to SQL
+engine = create_engine('sqlite://')
+table = Table('data.csv', schema='schema.json')
+table.save('data', storage='sql', engine=engine)
+```
+
+## Documentation
+
 ### Storage
 
-Package implements [Tabular Storage](https://github.com/frictionlessdata/jsontableschema-py#storage) interface.
+Package implements [Tabular Storage](https://github.com/frictionlessdata/tableschema-py#storage) interface (see full documentation on the link):
 
-SQLAlchemy is used as sql wrapper. We can get storage this way:
+![Storage](https://raw.githubusercontent.com/frictionlessdata/tableschema-py/master/data/storage.png)
 
-```python
-from sqlalchemy import create_engine
-from tableschema_sql import Storage
+This driver provides an additional API:
 
-engine = create_engine('sqlite:///:memory:', prefix='prefix')
-storage = Storage(engine)
-```
+#### `Storage(engine, dbschema=None, prefix='', reflect_only=None, autoincrement=False)`
+- `engine (object)` - `sqlalchemy` engine
+- `dbschema (str)` - name of database schema
+- `prefix (str)` - prefix for all buckets
+- `reflect_only (callable)` - a boolean predicate to filter the list of table names when reflecting
+- `autoincrement (bool)` - add autoincrement column at the beginning
 
-Then we could interact with storage:
+#### `storage.create(..., indexes_fields=None)`
 
-```python
-storage.buckets
-storage.create('bucket', descriptor)
-storage.delete('bucket')
-storage.describe('bucket') # return descriptor
-storage.iter('bucket') # yield rows
-storage.read('bucket') # return rows
-storage.write('bucket', rows)
-```
+- `indexes_fields (str[])` - list of tuples containing field names, or list of such lists
 
-### Mappings
+#### `storage.write(..., keyed=False, as_generator=False, update_keys=None)`
 
-```
-schema.json -> SQL table schema
-data.csv -> SQL talbe data
-```
-
-### Drivers
-
-SQLAlchemy is used - [docs](http://www.sqlalchemy.org/).
-
-## API Reference
-
-### Snapshot
-
-https://github.com/frictionlessdata/jsontableschema-py#snapshot
-
-### Detailed
-
-- [Docstrings](https://github.com/frictionlessdata/jsontableschema-py/tree/master/jsontableschema/storage.py)
-- [Changelog](https://github.com/frictionlessdata/jsontableschema-sql-py/commits/master)
+- `keyed (bool)` - accept keyed rows
+- `as_generator (bool)` - returns generator to provide writing control to the client
+- `update_keys (str[])` - update instead of inserting if key values match existent rows
 
 ## Contributing
 
-Please read the contribution guideline:
+The project follows the [Open Knowledge International coding standards](https://github.com/okfn/coding-standards).
 
-[How to Contribute](CONTRIBUTING.md)
+Recommended way to get started is to create and activate a project virtual environment.
+To install package and development dependencies into active environment:
 
-Thanks!
+```
+$ make install
+```
+
+To run tests with linting and coverage:
+
+```bash
+$ make test
+```
+
+For linting `pylama` configured in `pylama.ini` is used. On this stage it's already
+installed into your environment and could be used separately with more fine-grained control
+as described in documentation - https://pylama.readthedocs.io/en/latest/.
+
+For example to sort results by error type:
+
+```bash
+$ pylama --sort <path>
+```
+
+For testing `tox` configured in `tox.ini` is used.
+It's already installed into your environment and could be used separately with more fine-grained control as described in documentation - https://testrun.org/tox/latest/.
+
+For example to check subset of tests against Python 2 environment with increased verbosity.
+All positional arguments and options after `--` will be passed to `py.test`:
+
+```bash
+tox -e py27 -- -v tests/<path>
+```
+
+Under the hood `tox` uses `pytest` configured in `pytest.ini`, `coverage`
+and `mock` packages. This packages are available only in tox envionments.
+
+## Changelog
+
+Here described only breaking and the most important changes. The full changelog and documentation for all released versions could be found in nicely formatted [commit history](https://github.com/frictionlessdata/tableschema-sql-py/commits/master).
+
+### v0.x
+
+Initial driver implementation.

@@ -8,29 +8,19 @@ import six
 import collections
 import tableschema
 from sqlalchemy import Table, MetaData
-from . import mappers
-from .writer import StorageWriter
+from .writer import Writer
+from .mapper import Mapper
 
 
 # Module API
 
 class Storage(object):
-    """SQL Tabular Storage.
-
-    It's an implementation of `tablescema.Storage`.
-
-    Args:
-        engine (object): SQLAlchemy engine
-        dbschema (str): database schema name
-        prefix (str): prefix for all buckets
-        reflect_only (callable): a boolean predicate to filter
-            the list of table names when reflecting
-    """
 
     # Public
 
-    def __init__(self, engine, dbschema=None, prefix='', reflect_only=None,
-                 autoincrement=None):
+    def __init__(self, engine, dbschema=None, prefix='', reflect_only=None, autoincrement=None):
+        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """
 
         # Set attributes
         self.__connection = engine.connect()
@@ -38,15 +28,13 @@ class Storage(object):
         self.__prefix = prefix
         self.__descriptors = {}
         self.__autoincrement = autoincrement
-        if reflect_only is not None:
-            self.__only = reflect_only
-        else:
-            self.__only = lambda _: True
+        self.__only = reflect_only or (lambda _: True)
 
-        # Create metadata
-        self.__metadata = MetaData(
-            bind=self.__connection,
-            schema=self.__dbschema)
+        # Create mapper
+        self.__mapper = Mapper(prefix)
+
+        # Create metadata and reflect
+        self.__metadata = MetaData(bind=self.__connection, schema=self.__dbschema)
         self.__reflect()
 
     def __repr__(self):
@@ -61,33 +49,17 @@ class Storage(object):
 
     @property
     def buckets(self):
-
-        # Collect
+        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """
         buckets = []
         for table in self.__metadata.sorted_tables:
-            bucket = mappers.tablename_to_bucket(self.__prefix, table.name)
+            bucket = self.__mapper.restore_bucket(table.name)
             if bucket is not None:
                 buckets.append(bucket)
-
         return buckets
 
     def create(self, bucket, descriptor, force=False, indexes_fields=None):
-        """Create table by schema.
-
-        Parameters
-        ----------
-        table: str/list
-            Table name or list of table names.
-        schema: dict/list
-            JSONTableSchema schema or list of schemas.
-        indexes_fields: list
-            list of tuples containing field names, or list of such lists
-
-        Raises
-        ------
-        RuntimeError
-            If table already exists.
-
+        """https://github.com/frictionlessdata/tableschema-sql-py#storage
         """
 
         # Make lists
@@ -101,8 +73,10 @@ class Storage(object):
             indexes_fields = [()] * len(descriptors)
         elif type(indexes_fields[0][0]) not in {list, tuple}:
             indexes_fields = [indexes_fields]
-        assert len(indexes_fields) == len(descriptors)
-        assert len(buckets) == len(descriptors)
+
+        # Check dimensions
+        if not (len(buckets) == len(descriptors) == len(indexes_fields)):
+            raise RuntimeError('Wrong argument dimensions')
 
         # Check buckets for existence
         for bucket in reversed(self.buckets):
@@ -115,20 +89,22 @@ class Storage(object):
         # Define buckets
         for bucket, descriptor, index_fields in zip(buckets, descriptors, indexes_fields):
 
-            # Add to schemas
+            # Add to descriptors
+            tableschema.validate(descriptor)
             self.__descriptors[bucket] = descriptor
 
             # Create table
-            tableschema.validate(descriptor)
-            tablename = mappers.bucket_to_tablename(self.__prefix, bucket)
-            columns, constraints, indexes = mappers.descriptor_to_columns_and_constraints(
-                self.__prefix, bucket, descriptor, index_fields, self.__autoincrement)
-            Table(tablename, self.__metadata, *(columns+constraints+indexes))
+            table_name = self.__mapper.convert_bucket(bucket)
+            columns, constraints, indexes = self.__mapper.convert_descriptor(
+                bucket, descriptor, index_fields, self.__autoincrement)
+            Table(table_name, self.__metadata, *(columns+constraints+indexes))
 
         # Create tables, update metadata
         self.__metadata.create_all()
 
     def delete(self, bucket=None, ignore=False):
+        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """
 
         # Make lists
         buckets = bucket
@@ -137,7 +113,7 @@ class Storage(object):
         elif bucket is None:
             buckets = reversed(self.buckets)
 
-        # Iterate over buckets
+        # Iterate
         tables = []
         for bucket in buckets:
 
@@ -161,6 +137,8 @@ class Storage(object):
         self.__reflect()
 
     def describe(self, bucket, descriptor=None):
+        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """
 
         # Set descriptor
         if descriptor is not None:
@@ -171,71 +149,62 @@ class Storage(object):
             descriptor = self.__descriptors.get(bucket)
             if descriptor is None:
                 table = self.__get_table(bucket)
-                descriptor = mappers.columns_and_constraints_to_descriptor(
-                    self.__prefix, table.name, table.columns, table.constraints,
-                    self.__autoincrement)
+                descriptor = self.__mapper.restore_descriptor(
+                    table.name, table.columns, table.constraints, self.__autoincrement)
 
         return descriptor
 
     def iter(self, bucket):
+        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """
 
-        # Get result
+        # Get table
         table = self.__get_table(bucket)
 
-        # Make sure we close the transaction after iterating,
-        #   otherwise it is left hanging
+        # Open and close transaction
         with self.__connection.begin():
             # Streaming could be not working for some backends:
             # http://docs.sqlalchemy.org/en/latest/core/connections.html
             select = table.select().execution_options(stream_results=True)
             result = select.execute()
-
-            # Yield data
             for row in result:
                 yield list(row)
 
     def read(self, bucket):
-
-        # Get rows
+        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """
         rows = list(self.iter(bucket))
-
         return rows
 
     def write(self, bucket, rows, keyed=False, as_generator=False, update_keys=None):
+        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """
 
+        # Check update keys
         if update_keys is not None and len(update_keys) == 0:
-            raise ValueError('update_keys cannot be an empty list')
+            raise ValueError('Update_keys cannot be an empty list')
 
+        # Get table and description
         table = self.__get_table(bucket)
         descriptor = self.describe(bucket)
 
-        writer = StorageWriter(table, descriptor, update_keys, self.__autoincrement)
-
+        # Write rows to table
+        writer = Writer(table, descriptor, update_keys, self.__autoincrement)
         with self.__connection.begin():
             gen = writer.write(rows, keyed)
             if as_generator:
                 return gen
-            else:
-                collections.deque(gen, maxlen=0)
+            collections.deque(gen, maxlen=0)
 
     # Private
+
     def __get_table(self, bucket):
-        """Return SQLAlchemy table for the given bucket.
-        """
-
-        # Prepare name
-        tablename = mappers.bucket_to_tablename(self.__prefix, bucket)
+        table_name = self.__mapper.convert_bucket(bucket)
         if self.__dbschema:
-            tablename = '.'.join((self.__dbschema, tablename))
-
-        return self.__metadata.tables[tablename]
+            table_name = '.'.join((self.__dbschema, table_name))
+        return self.__metadata.tables[table_name]
 
     def __reflect(self):
         def only(name, _):
-            ret = (
-                self.__only(name) and
-                mappers.tablename_to_bucket(self.__prefix, name) is not None
-            )
-            return ret
-
+            return self.__only(name) and self.__mapper.restore_bucket(name) is not None
         self.__metadata.reflect(only=only)

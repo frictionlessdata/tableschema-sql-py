@@ -5,22 +5,22 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import json
-
+import tableschema
 import pybloom_live
 from sqlalchemy import select
 from collections import namedtuple
-
-import tableschema
 from tableschema.exceptions import CastError
-
-BUFFER_SIZE = 1000
 WrittenRow = namedtuple('WrittenRow', ['row', 'updated', 'updated_id'])
+BUFFER_SIZE = 1000
 
 
-class StorageWriter(object):
+# Module API
+
+class Writer(object):
+
+    # Public
 
     def __init__(self, table, descriptor, update_keys, autoincrement):
-
         self.table = table
         self.descriptor = descriptor
         self.update_keys = update_keys
@@ -30,34 +30,26 @@ class StorageWriter(object):
         self.__buffer = []
 
     def write(self, rows, keyed):
-        # Prepare
         schema = tableschema.Schema(self.descriptor)
-
-        # Write
         for row in rows:
             if not keyed:
                 row = self.__convert_to_keyed(schema, row)
-
             keyed_row = row
-
             if self.__check_existing(keyed_row):
                 for wr in self.__insert():
                     yield wr
                 ret = self.__update(row)
                 if ret is not None:
-                    yield WrittenRow(keyed_row,
-                                     True,
-                                     ret if self.autoincrement else None)
+                    yield WrittenRow(keyed_row, True, ret if self.autoincrement else None)
                     continue
-
             self.__buffer.append(keyed_row)
-
             if len(self.__buffer) > BUFFER_SIZE:
                 for wr in self.__insert():
                     yield wr
-
         for wr in self.__insert():
             yield wr
+
+    # Private
 
     def __insert(self):
         if len(self.__buffer) > 0:
@@ -89,10 +81,8 @@ class StorageWriter(object):
                 first = next(iter(res))
                 last_row_id = first[0]
                 return last_row_id
-            else:
-                return 0
-        else:
-            return None
+            return 0
+        return None
 
     @staticmethod
     def __convert_to_keyed(schema, row):
@@ -104,7 +94,6 @@ class StorageWriter(object):
             except CastError:
                 value = json.loads(value)
             keyed_row[field.name] = value
-
         return keyed_row
 
     def __prepare_bloom(self):
@@ -122,5 +111,4 @@ class StorageWriter(object):
             else:
                 self.bloom.add(key)
                 return False
-        else:
-            return False
+        return False

@@ -4,12 +4,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import json
-import tableschema
 import pybloom_live
 from sqlalchemy import select
 from collections import namedtuple
-from tableschema.exceptions import CastError
 WrittenRow = namedtuple('WrittenRow', ['row', 'updated', 'updated_id'])
 BUFFER_SIZE = 1000
 

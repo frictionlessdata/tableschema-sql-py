@@ -102,7 +102,7 @@ class Mapper(object):
         """Convert row to SQL
         """
         for key, value in list(keyed_row.items()):
-            field=schema.get_field(key)
+            field = schema.get_field(key)
             if not field:
                 del keyed_row[key]
             if key in fallbacks:

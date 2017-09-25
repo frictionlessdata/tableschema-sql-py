@@ -20,27 +20,32 @@ class Writer(object):
 
     # Public
 
-    def __init__(self, table, descriptor, update_keys, autoincrement):
-        self.table = table
-        self.descriptor = descriptor
-        self.update_keys = update_keys
-        self.autoincrement = autoincrement
+    def __init__(self, table, schema, update_keys, autoincrement, convert_row):
+        """Writer to insert/update rows into table
+        """
+        self.__table = table
+        self.__schema = schema
+        self.__update_keys = update_keys
+        self.__autoincrement = autoincrement
+        self.__convert_row = convert_row
+        self.__buffer = []
         if update_keys is not None:
             self.__prepare_bloom()
-        self.__buffer = []
 
-    def write(self, rows, keyed):
-        schema = tableschema.Schema(self.descriptor)
+    def write(self, rows, keyed=False):
+        """Write rows/keyed_rows to table
+        """
         for row in rows:
-            if not keyed:
-                row = self.__convert_to_keyed(schema, row)
             keyed_row = row
+            if not keyed:
+                keyed_row = dict(zip(self.__schema.field_names, row))
+            keyed_row = self.__convert_row(keyed_row)
             if self.__check_existing(keyed_row):
                 for wr in self.__insert():
                     yield wr
-                ret = self.__update(row)
+                ret = self.__update(keyed_row)
                 if ret is not None:
-                    yield WrittenRow(keyed_row, True, ret if self.autoincrement else None)
+                    yield WrittenRow(keyed_row, True, ret if self.__autoincrement else None)
                     continue
             self.__buffer.append(keyed_row)
             if len(self.__buffer) > BUFFER_SIZE:
@@ -51,12 +56,24 @@ class Writer(object):
 
     # Private
 
+    def __prepare_bloom(self):
+        """Prepare bloom for existing checks
+        """
+        self.__bloom = pybloom_live.ScalableBloomFilter()
+        columns = [getattr(self.__table.c, key) for key in self.__update_keys]
+        keys = select(columns).execution_options(stream_results=True).execute()
+        for key in keys:
+            self.__bloom.add(key)
+
     def __insert(self):
+        """Insert rows to table
+        """
         if len(self.__buffer) > 0:
             # Insert data
-            statement = self.table.insert()
-            if self.autoincrement:
-                statement = statement.returning(getattr(self.table.c, self.autoincrement))
+            statement = self.__table.insert()
+            if self.__autoincrement:
+                statement = statement.returning(
+                    getattr(self.__table.c, self.__autoincrement))
                 statement = statement.values(self.__buffer)
                 res = statement.execute()
                 for id, in res:
@@ -70,45 +87,29 @@ class Writer(object):
             self.__buffer = []
 
     def __update(self, row):
-        expr = self.table.update().values(row)
-        for key in self.update_keys:
-            expr = expr.where(getattr(self.table.c, key) == row[key])
-        if self.autoincrement:
-            expr = expr.returning(getattr(self.table.c, self.autoincrement))
+        """Update rows in table
+        """
+        expr = self.__table.update().values(row)
+        for key in self.__update_keys:
+            expr = expr.where(getattr(self.__table.c, key) == row[key])
+        if self.__autoincrement:
+            expr = expr.returning(getattr(self.__table.c, self.__autoincrement))
         res = expr.execute()
         if res.rowcount > 0:
-            if self.autoincrement:
+            if self.__autoincrement:
                 first = next(iter(res))
                 last_row_id = first[0]
                 return last_row_id
             return 0
         return None
 
-    @staticmethod
-    def __convert_to_keyed(schema, row):
-        keyed_row = {}
-        for index, field in enumerate(schema.fields):
-            value = row[index]
-            try:
-                value = field.cast_value(value)
-            except CastError:
-                value = json.loads(value)
-            keyed_row[field.name] = value
-        return keyed_row
-
-    def __prepare_bloom(self):
-        self.bloom = pybloom_live.ScalableBloomFilter()
-        columns = [getattr(self.table.c, key) for key in self.update_keys]
-        keys = select(columns).execution_options(stream_results=True).execute()
-        for key in keys:
-            self.bloom.add(key)
-
     def __check_existing(self, row):
-        if self.update_keys is not None:
-            key = tuple(row[key] for key in self.update_keys)
-            if key in self.bloom:
+        """Check if row exists in table
+        """
+        if self.__update_keys is not None:
+            key = tuple(row[key] for key in self.__update_keys)
+            if key in self.__bloom:
                 return True
-            else:
-                self.bloom.add(key)
-                return False
+            self.__bloom.add(key)
+            return False
         return False

@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import six
 import collections
 import tableschema
+from functools import partial
 from sqlalchemy import Table, MetaData
 from .writer import Writer
 from .mapper import Mapper
@@ -27,11 +28,12 @@ class Storage(object):
         self.__dbschema = dbschema
         self.__prefix = prefix
         self.__descriptors = {}
+        self.__fallbacks = {}
         self.__autoincrement = autoincrement
         self.__only = reflect_only or (lambda _: True)
 
         # Create mapper
-        self.__mapper = Mapper(prefix)
+        self.__mapper = Mapper(prefix=prefix, dialect=engine.dialect.name)
 
         # Create metadata and reflect
         self.__metadata = MetaData(bind=self.__connection, schema=self.__dbschema)
@@ -88,16 +90,13 @@ class Storage(object):
 
         # Define buckets
         for bucket, descriptor, index_fields in zip(buckets, descriptors, indexes_fields):
-
-            # Add to descriptors
             tableschema.validate(descriptor)
-            self.__descriptors[bucket] = descriptor
-
-            # Create table
             table_name = self.__mapper.convert_bucket(bucket)
-            columns, constraints, indexes = self.__mapper.convert_descriptor(
+            columns, constraints, indexes, fallbacks = self.__mapper.convert_descriptor(
                 bucket, descriptor, index_fields, self.__autoincrement)
-            Table(table_name, self.__metadata, *(columns+constraints+indexes))
+            Table(table_name, self.__metadata, *(columns + constraints + indexes))
+            self.__descriptors[bucket] = descriptor
+            self.__fallbacks[bucket] = fallbacks
 
         # Create tables, update metadata
         self.__metadata.create_all()
@@ -122,6 +121,7 @@ class Storage(object):
                 if not ignore:
                     message = 'Bucket "%s" doesn\'t exist.' % bucket
                     raise RuntimeError(message)
+                return
 
             # Remove from buckets
             if bucket in self.__descriptors:
@@ -158,8 +158,9 @@ class Storage(object):
         """https://github.com/frictionlessdata/tableschema-sql-py#storage
         """
 
-        # Get table
+        # Get table and fallbacks
         table = self.__get_table(bucket)
+        schema = tableschema.Schema(self.describe(bucket))
 
         # Open and close transaction
         with self.__connection.begin():
@@ -168,7 +169,8 @@ class Storage(object):
             select = table.select().execution_options(stream_results=True)
             result = select.execute()
             for row in result:
-                yield list(row)
+                row = self.__mapper.restore_row(row, schema=schema)
+                yield row
 
     def read(self, bucket):
         """https://github.com/frictionlessdata/tableschema-sql-py#storage
@@ -182,16 +184,18 @@ class Storage(object):
 
         # Check update keys
         if update_keys is not None and len(update_keys) == 0:
-            raise ValueError('Update_keys cannot be an empty list')
+            raise ValueError('Argument "update_keys" cannot be an empty list')
 
         # Get table and description
         table = self.__get_table(bucket)
-        descriptor = self.describe(bucket)
+        schema = tableschema.Schema(self.describe(bucket))
+        fallbacks = self.__fallbacks.get(bucket, [])
 
         # Write rows to table
-        writer = Writer(table, descriptor, update_keys, self.__autoincrement)
+        convert_row = partial(self.__mapper.convert_row, schema=schema, fallbacks=fallbacks)
+        writer = Writer(table, schema, update_keys, self.__autoincrement, convert_row)
         with self.__connection.begin():
-            gen = writer.write(rows, keyed)
+            gen = writer.write(rows, keyed=keyed)
             if as_generator:
                 return gen
             collections.deque(gen, maxlen=0)
@@ -199,12 +203,16 @@ class Storage(object):
     # Private
 
     def __get_table(self, bucket):
+        """Get table by bucket
+        """
         table_name = self.__mapper.convert_bucket(bucket)
         if self.__dbschema:
             table_name = '.'.join((self.__dbschema, table_name))
         return self.__metadata.tables[table_name]
 
     def __reflect(self):
+        """Reflect metadata
+        """
         def only(name, _):
             return self.__only(name) and self.__mapper.restore_bucket(name) is not None
         self.__metadata.reflect(only=only)

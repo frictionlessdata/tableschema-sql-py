@@ -31,7 +31,7 @@ env:
     - SQLITE_URL=sqlite:///:memory:
 
 before_install:
-  - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
+  - mysql -e 'CREATE DATABASE test CHARACTER SET utf8 COLLATE utf8_general_ci;'
 
 install:
   - make install

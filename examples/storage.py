@@ -21,7 +21,7 @@ articles_data = topen('data/articles.csv', with_headers=True).read()
 comments_data = topen('data/comments.csv', with_headers=True).read()
 
 # Engine
-engine = create_engine(os.environ['DATABASE_URL'])
+engine = create_engine(os.environ['POSTGRES_URL'])
 
 # Storage
 storage = Storage(engine=engine, prefix='prefix_')

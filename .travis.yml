@@ -26,9 +26,9 @@ python:
 env:
   global:
     - TOXENV="py${PYTHON_VERSION//./}"
-    - MYSQL_URL=mysql+pymysql://root@localhost:3306/test
     - POSTGRES_URL=postgresql://postgres@localhost:5432/postgres
     - SQLITE_URL=sqlite:///:memory:
+    - MYSQL_URL=mysql+pymysql://root@localhost:3306/test?charset=utf8
 
 before_install:
   - mysql -e 'CREATE DATABASE test CHARACTER SET utf8 COLLATE utf8_general_ci;'

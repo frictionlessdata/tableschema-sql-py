@@ -78,14 +78,14 @@ class Storage(object):
 
         # Check dimensions
         if not (len(buckets) == len(descriptors) == len(indexes_fields)):
-            raise RuntimeError('Wrong argument dimensions')
+            raise tableschema.exceptions.StorageError('Wrong argument dimensions')
 
         # Check buckets for existence
         for bucket in reversed(self.buckets):
             if bucket in buckets:
                 if not force:
                     message = 'Bucket "%s" already exists.' % bucket
-                    raise RuntimeError(message)
+                    raise tableschema.exceptions.StorageError(message)
                 self.delete(bucket)
 
         # Define buckets
@@ -120,7 +120,7 @@ class Storage(object):
             if bucket not in self.buckets:
                 if not ignore:
                     message = 'Bucket "%s" doesn\'t exist.' % bucket
-                    raise RuntimeError(message)
+                    raise tableschema.exceptions.StorageError(message)
                 return
 
             # Remove from buckets
@@ -184,7 +184,8 @@ class Storage(object):
 
         # Check update keys
         if update_keys is not None and len(update_keys) == 0:
-            raise ValueError('Argument "update_keys" cannot be an empty list')
+            message = 'Argument "update_keys" cannot be an empty list'
+            raise tableschema.exceptions.StorageError(message)
 
         # Get table and description
         table = self.__get_table(bucket)

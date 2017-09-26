@@ -28,7 +28,7 @@ class Mapper(object):
         """
         return self.__prefix + bucket
 
-    def convert_descriptor(self, bucket, descriptor, index_fields, autoincrement):
+    def convert_descriptor(self, bucket, descriptor, index_fields=[], autoincrement=None):
         """Convert descriptor to SQL
         """
 
@@ -145,7 +145,7 @@ class Mapper(object):
         # Not supported type
         if type not in mapping:
             message = 'Field type "%s" is not supported'
-            raise TypeError(message % type)
+            raise tableschema.exceptions.StorageError(message % type)
 
         return mapping[type]
 
@@ -156,7 +156,7 @@ class Mapper(object):
             return table_name.replace(self.__prefix, '', 1)
         return None
 
-    def restore_descriptor(self, table_name, columns, constraints, autoincrement_column):
+    def restore_descriptor(self, table_name, columns, constraints, autoincrement_column=None):
         """Restore descriptor from SQL
         """
 
@@ -247,7 +247,7 @@ class Mapper(object):
         # Not supported
         if field_type is None:
             message = 'Type "%s" is not supported'
-            raise TypeError(message % type)
+            raise tableschema.exceptions.StorageError(message % type)
 
         return field_type
 

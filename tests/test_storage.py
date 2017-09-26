@@ -129,7 +129,7 @@ def test_storage():
     storage = Storage(engine=engine, prefix='test_storage_')
 
     # Create existent bucket
-    with pytest.raises(RuntimeError):
+    with pytest.raises(tableschema.exceptions.StorageError):
         storage.create('articles', ARTICLES['schema'])
 
     # Assert buckets
@@ -184,7 +184,7 @@ def test_storage():
     assert storage.read('compound') == cast(COMPOUND)['data']
 
     # Delete non existent bucket
-    with pytest.raises(RuntimeError):
+    with pytest.raises(tableschema.exceptions.StorageError):
         storage.delete('non_existent')
 
     # Delete buckets
@@ -225,7 +225,7 @@ def test_storage_limited_databases(dialect, database_url):
     storage = Storage(engine=engine, prefix='test_storage_')
 
     # Create existent bucket
-    with pytest.raises(RuntimeError):
+    with pytest.raises(tableschema.exceptions.StorageError):
         storage.create('articles', ARTICLES['schema'])
 
     # Assert buckets
@@ -288,7 +288,7 @@ def test_storage_limited_databases(dialect, database_url):
     assert storage.read('compound') == cast(COMPOUND)['data']
 
     # Delete non existent bucket
-    with pytest.raises(RuntimeError):
+    with pytest.raises(tableschema.exceptions.StorageError):
         storage.delete('non_existent')
 
     # Delete buckets
@@ -442,7 +442,7 @@ def test_storage_only_parameter():
     storage = Storage(engine=engine, prefix='test_only_', reflect_only=only)
 
     # Delete non existent bucket
-    with pytest.raises(RuntimeError):
+    with pytest.raises(tableschema.exceptions.StorageError):
         storage.delete('names')
 
 

@@ -79,8 +79,8 @@ LOCATION = {
         ],
     },
     'data': [
-        ['{"type": "Point","coordinates":[50.00,50.00]}', '90,45'],
         ['{"type": "Point","coordinates":[33.33,33.33]}', '30,75'],
+        ['{"type": "Point","coordinates":[50.00,50.00]}', '90,45'],
     ],
 }
 COMPOUND = {

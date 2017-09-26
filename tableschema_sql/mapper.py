@@ -106,7 +106,7 @@ class Mapper(object):
             if not field:
                 del keyed_row[key]
             if key in fallbacks:
-                value = uncast_value(value, field=field)
+                value = _uncast_value(value, field=field)
             else:
                 value = field.cast_value(value)
             keyed_row[key] = value
@@ -254,7 +254,7 @@ class Mapper(object):
 
 # Internal
 
-def uncast_value(value, field):
+def _uncast_value(value, field):
     # Eventially should be moved to:
     # https://github.com/frictionlessdata/tableschema-py/issues/161
     if isinstance(value, (list, dict)):

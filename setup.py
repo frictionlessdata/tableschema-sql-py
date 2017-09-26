@@ -28,11 +28,12 @@ INSTALL_REQUIRES = [
     'tableschema>=1.0,<2.0',
 ]
 TESTS_REQUIRE = [
+    'psycopg2',
+    'pymysql',
     'pylama',
     'tox',
 ]
 EXAMPLES_REQUIRE = [
-    'psycopg2',
     'python-dotenv',
 ]
 README = read('README.md')

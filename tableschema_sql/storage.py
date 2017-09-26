@@ -40,6 +40,8 @@ class Storage(object):
         self.__reflect()
 
     def __repr__(self):
+        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """
 
         # Template and format
         template = 'Storage <{engine}/{dbschema}>'

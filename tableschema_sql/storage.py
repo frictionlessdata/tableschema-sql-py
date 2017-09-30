@@ -15,7 +15,7 @@ from .mapper import Mapper
 
 # Module API
 
-class Storage(object):
+class Storage(tableschema.Storage):
 
     # Public
 

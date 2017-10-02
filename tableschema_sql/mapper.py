@@ -140,6 +140,7 @@ class Mapper(object):
             mapping.update({
                 'geojson': JSONB,
                 'object': JSONB,
+                'array': JSONB,
             })
 
         # Not supported type

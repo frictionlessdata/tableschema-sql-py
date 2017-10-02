@@ -138,6 +138,7 @@ class Mapper(object):
         # Postgresql dialect
         if self.__dialect == 'postgresql':
             mapping.update({
+                'array': JSONB,
                 'geojson': JSONB,
                 'object': JSONB,
             })
@@ -216,7 +217,13 @@ class Mapper(object):
     def restore_row(self, row, schema):
         """Restore row from SQL
         """
-        return schema.cast_row(row)
+        row = list(row)
+        for index, field in enumerate(schema.fields):
+            if self.__dialect == 'postgresql':
+                if field.type in ['array', 'object']:
+                    continue
+            row[index] = field.cast_value(row[index])
+        return row
 
     def restore_type(self, type):
         """Restore type from SQL

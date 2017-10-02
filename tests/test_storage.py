@@ -168,7 +168,7 @@ def test_storage():
     assert storage.describe('compound') == {
         'fields': [
             {'name': 'stats', 'type': 'object'},
-            {'name': 'persons', 'type': 'object'},
+            {'name': 'persons', 'type': 'object'}, # type downgrade
         ],
     }
 

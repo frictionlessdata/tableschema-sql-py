@@ -173,16 +173,11 @@ def test_storage():
     }
 
     # Assert data
-    try:
-        assert storage.read('articles') == cast(ARTICLES)['data']
-        assert storage.read('comments') == cast(COMMENTS)['data']
-        assert storage.read('temporal') == cast(TEMPORAL, skip=['duration', 'yearmonth'])['data']
-        assert storage.read('location') == cast(LOCATION, skip=['geopoint'])['data']
-        assert storage.read('compound') == cast(COMPOUND, skip=['array'])['data']
-    except CastError as e:
-        for err in e.errors:
-            print('CastError', err)
-        raise
+    assert storage.read('articles') == cast(ARTICLES)['data']
+    assert storage.read('comments') == cast(COMMENTS)['data']
+    assert storage.read('temporal') == cast(TEMPORAL, skip=['duration', 'yearmonth'])['data']
+    assert storage.read('location') == cast(LOCATION, skip=['geopoint'])['data']
+    assert storage.read('compound') == cast(COMPOUND)['data']
 
     # Assert data with forced schema
     storage.describe('compound', COMPOUND['schema'])

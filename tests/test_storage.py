@@ -168,16 +168,21 @@ def test_storage():
     assert storage.describe('compound') == {
         'fields': [
             {'name': 'stats', 'type': 'object'},
-            {'name': 'persons', 'type': 'string'}, # type fallback
+            {'name': 'persons', 'type': 'object'},
         ],
     }
 
     # Assert data
-    assert storage.read('articles') == cast(ARTICLES)['data']
-    assert storage.read('comments') == cast(COMMENTS)['data']
-    assert storage.read('temporal') == cast(TEMPORAL, skip=['duration', 'yearmonth'])['data']
-    assert storage.read('location') == cast(LOCATION, skip=['geopoint'])['data']
-    assert storage.read('compound') == cast(COMPOUND, skip=['array'])['data']
+    try:
+        assert storage.read('articles') == cast(ARTICLES)['data']
+        assert storage.read('comments') == cast(COMMENTS)['data']
+        assert storage.read('temporal') == cast(TEMPORAL, skip=['duration', 'yearmonth'])['data']
+        assert storage.read('location') == cast(LOCATION, skip=['geopoint'])['data']
+        assert storage.read('compound') == cast(COMPOUND, skip=['array'])['data']
+    except CastError as e:
+        for err in e.errors:
+            print('CastError', err)
+        raise
 
     # Assert data with forced schema
     storage.describe('compound', COMPOUND['schema'])

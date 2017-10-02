@@ -127,13 +127,19 @@ class Mapper(object):
             'geojson': None,
             'geopoint': None,
             'integer': sa.Integer,
-            'number': sa.Float,
+            'number': sa.Numeric,
             'object': None,
             'string': sa.Text,
             'time': sa.Time,
             'year': sa.Integer,
             'yearmonth': None,
         }
+
+        # Mysql dialect
+        if self.__dialect == 'mysql':
+            mapping.update({
+                'number': sa.Float,
+            })
 
         # Postgresql dialect
         if self.__dialect == 'postgresql':
@@ -239,6 +245,7 @@ class Mapper(object):
             sa.Integer: 'integer',
             JSONB: 'object',
             JSON: 'object',
+            sa.Numeric: 'number',
             sa.Text: 'string',
             sa.Time: 'time',
             sa.VARCHAR: 'string',

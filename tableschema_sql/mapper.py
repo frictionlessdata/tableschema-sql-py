@@ -127,7 +127,7 @@ class Mapper(object):
             'geojson': None,
             'geopoint': None,
             'integer': sa.Integer,
-            'number': sa.Numeric,
+            'number': sa.Float,
             'object': None,
             'string': sa.Text,
             'time': sa.Time,
@@ -138,9 +138,9 @@ class Mapper(object):
         # Postgresql dialect
         if self.__dialect == 'postgresql':
             mapping.update({
+                'array': JSONB,
                 'geojson': JSONB,
                 'object': JSONB,
-                'array': JSONB,
             })
 
         # Not supported type
@@ -217,7 +217,14 @@ class Mapper(object):
     def restore_row(self, row, schema):
         """Restore row from SQL
         """
-        return schema.cast_row(row)
+        row = list(row)
+        for index, field in enumerate(schema.fields):
+            value = row[index]
+            if self.__dialect == 'postgresql':
+                if field.type in ['array', 'object']:
+                    continue
+            row[index] = field.cast_value(row[index])
+        return row
 
     def restore_type(self, type):
         """Restore type from SQL
@@ -229,10 +236,10 @@ class Mapper(object):
             sa.Boolean: 'boolean',
             sa.Date: 'date',
             sa.DateTime: 'datetime',
-            sa.Numeric: 'number',
+            sa.Float: 'number',
             sa.Integer: 'integer',
-            JSONB: 'string',
-            JSON: 'string',
+            JSONB: 'object',
+            JSON: 'object',
             sa.Text: 'string',
             sa.Time: 'time',
             sa.VARCHAR: 'string',

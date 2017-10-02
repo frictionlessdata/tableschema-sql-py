@@ -219,7 +219,6 @@ class Mapper(object):
         """
         row = list(row)
         for index, field in enumerate(schema.fields):
-            value = row[index]
             if self.__dialect == 'postgresql':
                 if field.type in ['array', 'object']:
                     continue

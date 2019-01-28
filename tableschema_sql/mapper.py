@@ -53,7 +53,8 @@ class Mapper(object):
                 column_type = sa.Text
                 fallbacks.append(field.name)
             nullable = not field.required
-            column = sa.Column(field.name, column_type, nullable=nullable)
+            comment = _get_comment(field)
+            column = sa.Column(field.name, column_type, nullable=nullable, comment=comment)
             columns.append(column)
             column_mapping[field.name] = column
 
@@ -271,3 +272,32 @@ def _uncast_value(value, field):
     else:
         value = str(value)
     return value
+
+
+def _get_comment(field, separator=' - '):
+    """
+    Create SQL comment from field's title and description
+
+    :param field: tableschema-py Field, with optional 'title' and 'description' values
+    :param separator:
+    :return:
+
+    >>> _get_comment(tableschema.Field({'title': 'my_title', 'description': 'my_description'}))
+    'my_title - my_description'
+    >>> _get_comment(tableschema.Field({'title': 'my_title', 'description': None}))
+    'my_title'
+    >>> _get_comment(tableschema.Field({'title': '', 'description': 'my_description'}))
+    'my_description'
+    >>> _get_comment(tableschema.Field({}))
+    ''
+    """
+    title = field.descriptor.get('title') or ''
+    description = field.descriptor.get('description') or ''
+    if title == '':
+        return description
+
+    if description == '':
+        return title
+
+    return title + separator + description
+

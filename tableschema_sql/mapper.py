@@ -54,7 +54,8 @@ class Mapper(object):
                 fallbacks.append(field.name)
             nullable = not field.required
             comment = _get_comment(field)
-            column = sa.Column(field.name, column_type, nullable=nullable, comment=comment)
+            unique = field.constraints.get('unique', False)
+            column = sa.Column(field.name, column_type, nullable=nullable, comment=comment, unique=unique)
             columns.append(column)
             column_mapping[field.name] = column
 

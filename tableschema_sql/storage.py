@@ -94,9 +94,9 @@ class Storage(tableschema.Storage):
         for bucket, descriptor, index_fields in zip(buckets, descriptors, indexes_fields):
             tableschema.validate(descriptor)
             table_name = self.__mapper.convert_bucket(bucket)
-            columns, constraints, indexes, fallbacks = self.__mapper.convert_descriptor(
+            columns, constraints, indexes, fallbacks, table_comment = self.__mapper.convert_descriptor(
                 bucket, descriptor, index_fields, self.__autoincrement)
-            Table(table_name, self.__metadata, *(columns + constraints + indexes))
+            Table(table_name, self.__metadata, *(columns + constraints + indexes), comment=table_comment)
             self.__descriptors[bucket] = descriptor
             self.__fallbacks[bucket] = fallbacks
 

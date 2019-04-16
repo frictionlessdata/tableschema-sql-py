@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import six
 import json
-import tableschema
+
+import six
 import sqlalchemy as sa
+import tableschema
 from sqlalchemy.dialects.postgresql import ARRAY, JSON, JSONB, UUID
 
 
@@ -56,7 +57,8 @@ class Mapper(object):
             nullable = not field.required
             table_comment = _get_field_comment(field)
             unique = field.constraints.get('unique', False)
-            column = sa.Column(field.name, column_type, nullable=nullable, comment=table_comment, unique=unique)
+            column = sa.Column(field.name, column_type, nullable=nullable, comment=table_comment,
+                               unique=unique)
             columns.append(column)
             column_mapping[field.name] = column
 
@@ -99,7 +101,7 @@ class Mapper(object):
                 index_columns = [column_mapping[field] for field in index_definition]
                 indexes.append(sa.Index(name, *index_columns))
 
-        return (columns, constraints, indexes, fallbacks, table_comment)
+        return columns, constraints, indexes, fallbacks, table_comment
 
     def convert_row(self, keyed_row, schema, fallbacks):
         """Convert row to SQL
@@ -284,8 +286,8 @@ def _get_field_comment(field, separator=' - '):
     :param separator:
     :return:
 
-    >>> _get_field_comment(tableschema.Field({'title': 'my_title', 'description': 'my_description'}))
-    'my_title - my_description'
+    >>> _get_field_comment(tableschema.Field({'title': 'my_title', 'description': 'my_desc'}))
+    'my_title - my_desc'
     >>> _get_field_comment(tableschema.Field({'title': 'my_title', 'description': None}))
     'my_title'
     >>> _get_field_comment(tableschema.Field({'title': '', 'description': 'my_description'}))
@@ -304,4 +306,3 @@ def _get_comment(description, title, separator=' - '):
     if description == '':
         return title
     return title + separator + description
-

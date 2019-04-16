@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import six
 import collections
-import tableschema
 from functools import partial
+
+import six
+import tableschema
 from sqlalchemy import Table, MetaData
-from .writer import Writer
+
 from .mapper import Mapper
+from .writer import Writer
 
 
 # Module API
@@ -94,9 +96,10 @@ class Storage(tableschema.Storage):
         for bucket, descriptor, index_fields in zip(buckets, descriptors, indexes_fields):
             tableschema.validate(descriptor)
             table_name = self.__mapper.convert_bucket(bucket)
-            columns, constraints, indexes, fallbacks, table_comment = self.__mapper.convert_descriptor(
-                bucket, descriptor, index_fields, self.__autoincrement)
-            Table(table_name, self.__metadata, *(columns + constraints + indexes), comment=table_comment)
+            columns, constraints, indexes, fallbacks, table_comment = self.__mapper \
+                .convert_descriptor(bucket, descriptor, index_fields, self.__autoincrement)
+            Table(table_name, self.__metadata, *(columns + constraints + indexes),
+                  comment=table_comment)
             self.__descriptors[bucket] = descriptor
             self.__fallbacks[bucket] = fallbacks
 
@@ -216,6 +219,8 @@ class Storage(tableschema.Storage):
     def __reflect(self):
         """Reflect metadata
         """
+
         def only(name, _):
             return self.__only(name) and self.__mapper.restore_bucket(name) is not None
+
         self.__metadata.reflect(only=only)

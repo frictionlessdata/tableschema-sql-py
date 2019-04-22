@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import six
 import json
-import tableschema
+
+import six
 import sqlalchemy as sa
+import tableschema
 from sqlalchemy.dialects.postgresql import ARRAY, JSON, JSONB, UUID
 
 
@@ -39,6 +40,7 @@ class Mapper(object):
         constraints = []
         column_mapping = {}
         table_name = self.convert_bucket(bucket)
+        table_comment = _get_comment(descriptor.get('title', ''), descriptor.get('description', ''))
         schema = tableschema.Schema(descriptor)
 
         # Autoincrement
@@ -53,7 +55,10 @@ class Mapper(object):
                 column_type = sa.Text
                 fallbacks.append(field.name)
             nullable = not field.required
-            column = sa.Column(field.name, column_type, nullable=nullable)
+            table_comment = _get_field_comment(field)
+            unique = field.constraints.get('unique', False)
+            column = sa.Column(field.name, column_type, nullable=nullable, comment=table_comment,
+                               unique=unique)
             columns.append(column)
             column_mapping[field.name] = column
 
@@ -96,7 +101,7 @@ class Mapper(object):
                 index_columns = [column_mapping[field] for field in index_definition]
                 indexes.append(sa.Index(name, *index_columns))
 
-        return (columns, constraints, indexes, fallbacks)
+        return columns, constraints, indexes, fallbacks, table_comment
 
     def convert_row(self, keyed_row, schema, fallbacks):
         """Convert row to SQL
@@ -271,3 +276,33 @@ def _uncast_value(value, field):
     else:
         value = str(value)
     return value
+
+
+def _get_field_comment(field, separator=' - '):
+    """
+    Create SQL comment from field's title and description
+
+    :param field: tableschema-py Field, with optional 'title' and 'description' values
+    :param separator:
+    :return:
+
+    >>> _get_field_comment(tableschema.Field({'title': 'my_title', 'description': 'my_desc'}))
+    'my_title - my_desc'
+    >>> _get_field_comment(tableschema.Field({'title': 'my_title', 'description': None}))
+    'my_title'
+    >>> _get_field_comment(tableschema.Field({'title': '', 'description': 'my_description'}))
+    'my_description'
+    >>> _get_field_comment(tableschema.Field({}))
+    ''
+    """
+    title = field.descriptor.get('title') or ''
+    description = field.descriptor.get('description') or ''
+    return _get_comment(description, title, separator)
+
+
+def _get_comment(description, title, separator=' - '):
+    if title == '':
+        return description
+    if description == '':
+        return title
+    return title + separator + description

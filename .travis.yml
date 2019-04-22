@@ -1,14 +1,8 @@
 sudo:
-  required
-
-dist:
-  trusty
+  false
 
 addons:
   postgresql: "9.4"
-  apt:
-    packages:
-      - pandoc
 
 services:
   - mysql
@@ -41,11 +35,6 @@ script:
 
 after_success:
   - coveralls
-
-before_deploy:
-  - pandoc --version
-  - pandoc -f markdown_github -t rst -o README.rst README.md
-  - mv README.rst README.md
 
 deploy:
   provider: pypi

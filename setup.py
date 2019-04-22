@@ -21,11 +21,11 @@ def read(*paths):
 PACKAGE = 'tableschema_sql'
 NAME = PACKAGE.replace('_', '-')
 INSTALL_REQUIRES = [
-    'six>=1.9,<2.0',
-    'sqlalchemy>=1.0,<2.0',
-    'pybloom_live>=2.2,<3.0',
-    'tabulator>=1.0.0a5,<2.0',
-    'tableschema>=1.0,<2.0',
+    'six>=1.9',
+    'sqlalchemy>=1.0',
+    'pybloom_live>=2.2',
+    'tabulator>=1.0.0a5',
+    'tableschema>=1.0',
 ]
 TESTS_REQUIRE = [
     'psycopg2',

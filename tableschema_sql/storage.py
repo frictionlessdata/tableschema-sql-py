@@ -188,7 +188,8 @@ class Storage(tableschema.Storage):
         rows = list(self.iter(bucket))
         return rows
 
-    def write(self, bucket, rows, keyed=False, as_generator=False, update_keys=None, buffer_size=1000):
+    def write(self, bucket, rows, keyed=False, as_generator=False, update_keys=None,
+              buffer_size=1000, use_bloom_filter=True):
         """https://github.com/frictionlessdata/tableschema-sql-py#storage
         """
 
@@ -210,7 +211,8 @@ class Storage(tableschema.Storage):
             autoincrement=autoincrement if self.__dialect in ['postgresql'] else None,
             update_keys=update_keys,
             convert_row=convert_row,
-            buffer_size=buffer_size)
+            buffer_size=buffer_size,
+            use_bloom_filter=use_bloom_filter)
         with self.__connection.begin():
             gen = writer.write(rows, keyed=keyed)
             if as_generator:

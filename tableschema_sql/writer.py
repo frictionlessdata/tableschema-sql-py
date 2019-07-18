@@ -17,7 +17,8 @@ class Writer(object):
     # Public
 
     def __init__(self, table, schema, update_keys,
-                 autoincrement, convert_row, buffer_size):
+                 autoincrement, convert_row, buffer_size,
+                 use_bloom_filter):
         """Writer to insert/update rows into table
         """
         self.__table = table
@@ -27,7 +28,8 @@ class Writer(object):
         self.__convert_row = convert_row
         self.__buffer = []
         self.__buffer_size = buffer_size
-        if update_keys is not None:
+        self.__use_bloom_filter = use_bloom_filter
+        if update_keys is not None and use_bloom_filter:
             self.__prepare_bloom()
 
     def write(self, rows, keyed=False):
@@ -105,9 +107,12 @@ class Writer(object):
         """Check if row exists in table
         """
         if self.__update_keys is not None:
-            key = tuple(row[key] for key in self.__update_keys)
-            if key in self.__bloom:
+            if self.__use_bloom_filter:
+                key = tuple(row[key] for key in self.__update_keys)
+                if key in self.__bloom:
+                    return True
+                self.__bloom.add(key)
+                return False
+            else:
                 return True
-            self.__bloom.add(key)
-            return False
         return False

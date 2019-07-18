@@ -8,7 +8,6 @@ import pybloom_live
 from sqlalchemy import select
 from collections import namedtuple
 WrittenRow = namedtuple('WrittenRow', ['row', 'updated', 'updated_id'])
-BUFFER_SIZE = 1000
 
 
 # Module API
@@ -17,7 +16,8 @@ class Writer(object):
 
     # Public
 
-    def __init__(self, table, schema, update_keys, autoincrement, convert_row):
+    def __init__(self, table, schema, update_keys,
+                 autoincrement, convert_row, buffer_size):
         """Writer to insert/update rows into table
         """
         self.__table = table
@@ -26,6 +26,7 @@ class Writer(object):
         self.__autoincrement = autoincrement
         self.__convert_row = convert_row
         self.__buffer = []
+        self.__buffer_size = buffer_size
         if update_keys is not None:
             self.__prepare_bloom()
 
@@ -45,7 +46,7 @@ class Writer(object):
                     yield WrittenRow(keyed_row, True, ret if self.__autoincrement else None)
                     continue
             self.__buffer.append(keyed_row)
-            if len(self.__buffer) > BUFFER_SIZE:
+            if len(self.__buffer) > self.__buffer_size:
                 for wr in self.__insert():
                     yield wr
         for wr in self.__insert():

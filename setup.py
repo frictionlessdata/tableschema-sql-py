@@ -31,6 +31,8 @@ TESTS_REQUIRE = [
     'psycopg2',
     'pymysql',
     'pylama',
+    'pytest',
+    'mock',
     'tox',
 ]
 EXAMPLES_REQUIRE = [

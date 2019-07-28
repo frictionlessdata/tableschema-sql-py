@@ -12,6 +12,20 @@ Generate and load SQL tables based on [Table Schema](http://specs.frictionlessda
 - implements `tableschema.Storage` interface
 - provides additional features like indexes and updating
 
+## Contents
+
+<!--TOC-->
+
+  - [Getting Started](#getting-started)
+    - [Installation](#installation)
+    - [Examples](#examples)
+  - [Documentation](#documentation)
+    - [Storage](#storage)
+  - [Contributing](#contributing)
+  - [Changelog](#changelog)
+
+<!--TOC-->
+
 ## Getting Started
 
 ### Installation
@@ -109,6 +123,6 @@ and `mock` packages. This packages are available only in tox envionments.
 
 Here described only breaking and the most important changes. The full changelog and documentation for all released versions could be found in nicely formatted [commit history](https://github.com/frictionlessdata/tableschema-sql-py/commits/master).
 
-### v0.x
+#### v0.x
 
 Initial driver implementation.

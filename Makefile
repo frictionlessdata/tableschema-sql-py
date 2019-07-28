@@ -13,10 +13,10 @@ install:
 list:
 	@grep '^\.PHONY' Makefile | cut -d' ' -f2- | tr ' ' '\n'
 
-release:
-	bash -c '[[ -z `git status -s` ]]'
-	git tag -a -m release $(VERSION)
-	git push --tags
+readme:
+	pip install md-toc
+	md_toc -p README.md github --header-levels 3
+	sed -i '/(#tableschema-sql-py)/,+2d' README.md
 
 test:
 	pylama $(PACKAGE)

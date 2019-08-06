@@ -99,10 +99,25 @@ COMPOUND = {
 
 # Tests
 
-def test_storage():
+@pytest.mark.only
+@pytest.mark.parametrize('dialect, database_url', [
+    ('postgresql', os.environ['POSTGRES_URL']),
+    ('sqlite', os.environ['SQLITE_URL']),
+])
+def test_storage(dialect, database_url):
+
+    # Enable Foreign Keys for SQLite
+    if dialect == 'sqlite':
+        from sqlalchemy.engine import Engine
+        from sqlalchemy import event
+        @event.listens_for(Engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA foreign_keys=ON")
+            cursor.close()
 
     # Create storage
-    engine = create_engine(os.environ['POSTGRES_URL'])
+    engine = create_engine(database_url)
     storage = Storage(engine=engine, prefix='test_storage_')
 
     # Delete buckets
@@ -159,25 +174,27 @@ def test_storage():
             {'name': 'yearmonth', 'type': 'string'}, # type fallback
         ],
     }
-    assert storage.describe('location') == {
-        'fields': [
-            {'name': 'location', 'type': 'object'}, # type downgrade
-            {'name': 'geopoint', 'type': 'string'}, # type fallback
-        ],
-    }
-    assert storage.describe('compound') == {
-        'fields': [
-            {'name': 'stats', 'type': 'object'},
-            {'name': 'persons', 'type': 'object'}, # type downgrade
-        ],
-    }
+    if dialect != 'sqlite':
+        assert storage.describe('location') == {
+            'fields': [
+                {'name': 'location', 'type': 'object'}, # type downgrade
+                {'name': 'geopoint', 'type': 'string'}, # type fallback
+            ],
+        }
+        assert storage.describe('compound') == {
+            'fields': [
+                {'name': 'stats', 'type': 'object'},
+                {'name': 'persons', 'type': 'object'}, # type downgrade
+            ],
+        }
 
     # Assert data
     assert storage.read('articles') == cast(ARTICLES)['data']
     assert storage.read('comments') == cast(COMMENTS)['data']
     assert storage.read('temporal') == cast(TEMPORAL, skip=['duration', 'yearmonth'])['data']
-    assert storage.read('location') == cast(LOCATION, skip=['geopoint'])['data']
-    assert storage.read('compound') == cast(COMPOUND)['data']
+    if dialect != 'sqlite':
+        assert storage.read('location') == cast(LOCATION, skip=['geopoint'])['data']
+        assert storage.read('compound') == cast(COMPOUND)['data']
 
     # Assert data with forced schema
     storage.describe('compound', COMPOUND['schema'])
@@ -192,8 +209,8 @@ def test_storage():
 
 
 @pytest.mark.parametrize('dialect, database_url', [
-    ('sqlite', os.environ['SQLITE_URL']),
     ('mysql', os.environ['MYSQL_URL']),
+    ('sqlite', os.environ['SQLITE_URL']),
 ])
 def test_storage_limited_databases(dialect, database_url):
 

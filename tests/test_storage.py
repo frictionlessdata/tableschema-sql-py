@@ -99,10 +99,14 @@ COMPOUND = {
 
 # Tests
 
-def test_storage():
+@pytest.mark.parametrize('dialect, database_url', [
+    ('postgresql', os.environ['POSTGRES_URL']),
+    ('sqlite', os.environ['SQLITE_URL']),
+])
+def test_storage(dialect, database_url):
 
     # Create storage
-    engine = create_engine(os.environ['POSTGRES_URL'])
+    engine = create_engine(database_url)
     storage = Storage(engine=engine, prefix='test_storage_')
 
     # Delete buckets
@@ -159,25 +163,27 @@ def test_storage():
             {'name': 'yearmonth', 'type': 'string'}, # type fallback
         ],
     }
-    assert storage.describe('location') == {
-        'fields': [
-            {'name': 'location', 'type': 'object'}, # type downgrade
-            {'name': 'geopoint', 'type': 'string'}, # type fallback
-        ],
-    }
-    assert storage.describe('compound') == {
-        'fields': [
-            {'name': 'stats', 'type': 'object'},
-            {'name': 'persons', 'type': 'object'}, # type downgrade
-        ],
-    }
+    if dialect != 'sqlite':
+        assert storage.describe('location') == {
+            'fields': [
+                {'name': 'location', 'type': 'object'}, # type downgrade
+                {'name': 'geopoint', 'type': 'string'}, # type fallback
+            ],
+        }
+        assert storage.describe('compound') == {
+            'fields': [
+                {'name': 'stats', 'type': 'object'},
+                {'name': 'persons', 'type': 'object'}, # type downgrade
+            ],
+        }
 
     # Assert data
     assert storage.read('articles') == cast(ARTICLES)['data']
     assert storage.read('comments') == cast(COMMENTS)['data']
     assert storage.read('temporal') == cast(TEMPORAL, skip=['duration', 'yearmonth'])['data']
-    assert storage.read('location') == cast(LOCATION, skip=['geopoint'])['data']
-    assert storage.read('compound') == cast(COMPOUND)['data']
+    if dialect != 'sqlite':
+        assert storage.read('location') == cast(LOCATION, skip=['geopoint'])['data']
+        assert storage.read('compound') == cast(COMPOUND)['data']
 
     # Assert data with forced schema
     storage.describe('compound', COMPOUND['schema'])
@@ -192,8 +198,8 @@ def test_storage():
 
 
 @pytest.mark.parametrize('dialect, database_url', [
-    ('sqlite', os.environ['SQLITE_URL']),
     ('mysql', os.environ['MYSQL_URL']),
+    ('sqlite', os.environ['SQLITE_URL']),
 ])
 def test_storage_limited_databases(dialect, database_url):
 
@@ -207,9 +213,9 @@ def test_storage_limited_databases(dialect, database_url):
     # Create buckets
     storage.create(
         ['articles', 'comments'],
-        [ARTICLES['schema'], COMMENTS['schema']],
+        [remove_fk(ARTICLES['schema']), remove_fk(COMMENTS['schema'])],
         indexes_fields=[[['rating'], ['name']], []])
-    storage.create('comments', COMMENTS['schema'], force=True)
+    storage.create('comments', remove_fk(COMMENTS['schema']), force=True)
     storage.create('temporal', TEMPORAL['schema'])
     storage.create('location', LOCATION['schema'])
     storage.create('compound', COMPOUND['schema'])
@@ -302,7 +308,7 @@ def test_storage_write_generator():
     storage = Storage(engine=engine, prefix='test_storage_')
 
     # Create bucket
-    storage.create('comments', COMMENTS['schema'], force=True)
+    storage.create('comments', remove_fk(COMMENTS['schema']), force=True)
 
     # Write data using generator
     gen = storage.write('comments', COMMENTS['data'], as_generator=True)
@@ -499,3 +505,8 @@ def cast(resource, skip=[]):
             if field.type not in skip:
                 row[index] = field.cast_value(row[index])
     return resource
+
+def remove_fk(schema):
+    schema = deepcopy(schema)
+    del schema['foreignKeys']
+    return schema

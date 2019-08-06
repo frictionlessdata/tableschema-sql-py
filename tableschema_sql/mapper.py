@@ -77,7 +77,7 @@ class Mapper(object):
             constraints.append(constraint)
 
         # Foreign keys
-        if self.__dialect == 'postgresql':
+        if self.__dialect in ['postgresql', 'sqlite']:
             fks = descriptor.get('foreignKeys', [])
             for fk in fks:
                 fields = fk['fields']
@@ -189,7 +189,7 @@ class Mapper(object):
 
         # Foreign keys
         fks = []
-        if self.__dialect == 'postgresql':
+        if self.__dialect in ['postgresql', 'sqlite']:
             for constraint in constraints:
                 if isinstance(constraint, sa.ForeignKeyConstraint):
                     resource = ''

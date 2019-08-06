@@ -123,6 +123,10 @@ and `mock` packages. This packages are available only in tox envionments.
 
 Here described only breaking and the most important changes. The full changelog and documentation for all released versions could be found in nicely formatted [commit history](https://github.com/frictionlessdata/tableschema-sql-py/commits/master).
 
+#### v1.0
+
+- Added FK support for SQLite databases
+
 #### v0.x
 
-Initial driver implementation.
+- Initial driver implementation.

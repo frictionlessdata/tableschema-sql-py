@@ -168,6 +168,7 @@ class Storage(tableschema.Storage):
         # Get table and fallbacks
         table = self.__get_table(bucket)
         schema = tableschema.Schema(self.describe(bucket))
+        autoincrement = self.__get_autoincrement_for_bucket(bucket)
 
         # Open and close transaction
         with self.__connection.begin():
@@ -176,7 +177,8 @@ class Storage(tableschema.Storage):
             select = table.select().execution_options(stream_results=True)
             result = select.execute()
             for row in result:
-                row = self.__mapper.restore_row(row, schema=schema)
+                row = self.__mapper.restore_row(
+                    row, schema=schema, autoincrement=autoincrement)
                 yield row
 
     def read(self, bucket):

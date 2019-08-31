@@ -495,6 +495,66 @@ def test_storage_bigdata_rollback():
     assert list(storage.read('bucket')) == []
 
 
+@pytest.mark.parametrize('dialect, database_url', [
+    ('postgresql', os.environ['POSTGRES_URL']),
+    #  ('sqlite', os.environ['SQLITE_URL']),
+])
+def test_storage_autoincrement_string(dialect, database_url):
+    RESOURCE = {
+        'schema': {'fields': [{'name': 'name', 'type': 'string'}]},
+        'data': [['london'], ['paris'], ['rome']],
+    }
+
+    # Write data
+    engine = create_engine(database_url)
+    storage = Storage(engine, autoincrement='id', prefix='test_storage_autoincrement_string_')
+    storage.create(['bucket1', 'bucket2'], [RESOURCE['schema'], RESOURCE['schema']], force=True)
+    storage.write('bucket1', RESOURCE['data'])
+    storage.write('bucket2', RESOURCE['data'])
+
+    # Read data
+    assert list(storage.read('bucket1')) == [
+        [1, 'london'],
+        [2, 'paris'],
+        [3, 'rome'],
+    ]
+    assert list(storage.read('bucket2')) == [
+        [1, 'london'],
+        [2, 'paris'],
+        [3, 'rome'],
+    ]
+
+
+@pytest.mark.parametrize('dialect, database_url', [
+    ('postgresql', os.environ['POSTGRES_URL']),
+    #  ('sqlite', os.environ['SQLITE_URL']),
+])
+def test_storage_autoincrement_mapping(dialect, database_url):
+    RESOURCE = {
+        'schema': {'fields': [{'name': 'name', 'type': 'string'}]},
+        'data': [['london'], ['paris'], ['rome']],
+    }
+
+    # Write data
+    engine = create_engine(database_url)
+    storage = Storage(engine, autoincrement={'bucket1': 'id'}, prefix='test_storage_autoincrement_mapping_')
+    storage.create(['bucket1', 'bucket2'], [RESOURCE['schema'], RESOURCE['schema']], force=True)
+    storage.write('bucket1', RESOURCE['data'])
+    storage.write('bucket2', RESOURCE['data'])
+
+    # Read data
+    assert list(storage.read('bucket1')) == [
+        [1, 'london'],
+        [2, 'paris'],
+        [3, 'rome'],
+    ]
+    assert list(storage.read('bucket2')) == [
+        ['london'],
+        ['paris'],
+        ['rome'],
+    ]
+
+
 # Helpers
 
 def cast(resource, skip=[]):

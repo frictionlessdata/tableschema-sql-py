@@ -220,11 +220,11 @@ class Mapper(object):
 
         return descriptor
 
-    def restore_row(self, row, schema):
+    def restore_row(self, row, schema, autoincrement):
         """Restore row from SQL
         """
         row = list(row)
-        for index, field in enumerate(schema.fields):
+        for index, field in enumerate(schema.fields, start=int(bool(autoincrement))):
             if self.__dialect == 'postgresql':
                 if field.type in ['array', 'object']:
                     continue

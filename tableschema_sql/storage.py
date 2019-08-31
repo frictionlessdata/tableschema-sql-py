@@ -204,7 +204,7 @@ class Storage(tableschema.Storage):
 
         # Write rows to table
         convert_row = partial(self.__mapper.convert_row, schema=schema, fallbacks=fallbacks)
-        autoincrement =  self.__get_autoincrement_for_bucket(bucket)
+        autoincrement = self.__get_autoincrement_for_bucket(bucket)
         writer = Writer(table, schema,
             # Only PostgreSQL supports "returning" so we don't use autoincrement for all
             autoincrement=autoincrement if self.__dialect in ['postgresql'] else None,

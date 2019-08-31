@@ -33,9 +33,10 @@ class Storage(tableschema.Storage):
         self.__fallbacks = {}
         self.__autoincrement = autoincrement
         self.__only = reflect_only or (lambda _: True)
+        self.__dialect = engine.dialect.name
 
         # Create mapper
-        self.__mapper = Mapper(prefix=prefix, dialect=engine.dialect.name)
+        self.__mapper = Mapper(prefix=prefix, dialect=self.__dialect)
 
         # Create metadata and reflect
         self.__metadata = MetaData(bind=self.__connection, schema=self.__dbschema)
@@ -96,8 +97,9 @@ class Storage(tableschema.Storage):
         for bucket, descriptor, index_fields in zip(buckets, descriptors, indexes_fields):
             tableschema.validate(descriptor)
             table_name = self.__mapper.convert_bucket(bucket)
+            autoincrement = self.__get_autoincrement_for_bucket(bucket)
             columns, constraints, indexes, fallbacks, table_comment = self.__mapper \
-                .convert_descriptor(bucket, descriptor, index_fields, self.__autoincrement)
+                .convert_descriptor(bucket, descriptor, index_fields, autoincrement)
             Table(table_name, self.__metadata, *(columns + constraints + indexes),
                   comment=table_comment)
             self.__descriptors[bucket] = descriptor
@@ -154,8 +156,9 @@ class Storage(tableschema.Storage):
             descriptor = self.__descriptors.get(bucket)
             if descriptor is None:
                 table = self.__get_table(bucket)
+                autoincrement = self.__get_autoincrement_for_bucket(bucket)
                 descriptor = self.__mapper.restore_descriptor(
-                    table.name, table.columns, table.constraints, self.__autoincrement)
+                    table.name, table.columns, table.constraints, autoincrement)
 
         return descriptor
 
@@ -166,6 +169,7 @@ class Storage(tableschema.Storage):
         # Get table and fallbacks
         table = self.__get_table(bucket)
         schema = tableschema.Schema(self.describe(bucket))
+        autoincrement = self.__get_autoincrement_for_bucket(bucket)
 
         # Open and close transaction
         with self.__connection.begin():
@@ -174,7 +178,8 @@ class Storage(tableschema.Storage):
             select = table.select().execution_options(stream_results=True)
             result = select.execute()
             for row in result:
-                row = self.__mapper.restore_row(row, schema=schema)
+                row = self.__mapper.restore_row(
+                    row, schema=schema, autoincrement=autoincrement)
                 yield row
 
     def read(self, bucket):
@@ -199,7 +204,12 @@ class Storage(tableschema.Storage):
 
         # Write rows to table
         convert_row = partial(self.__mapper.convert_row, schema=schema, fallbacks=fallbacks)
-        writer = Writer(table, schema, update_keys, self.__autoincrement, convert_row)
+        autoincrement = self.__get_autoincrement_for_bucket(bucket)
+        writer = Writer(table, schema,
+            # Only PostgreSQL supports "returning" so we don't use autoincrement for all
+            autoincrement=autoincrement if self.__dialect in ['postgresql'] else None,
+            update_keys=update_keys,
+            convert_row=convert_row)
         with self.__connection.begin():
             gen = writer.write(rows, keyed=keyed)
             if as_generator:
@@ -209,18 +219,17 @@ class Storage(tableschema.Storage):
     # Private
 
     def __get_table(self, bucket):
-        """Get table by bucket
-        """
         table_name = self.__mapper.convert_bucket(bucket)
         if self.__dbschema:
             table_name = '.'.join((self.__dbschema, table_name))
         return self.__metadata.tables[table_name]
 
     def __reflect(self):
-        """Reflect metadata
-        """
-
         def only(name, _):
             return self.__only(name) and self.__mapper.restore_bucket(name) is not None
-
         self.__metadata.reflect(only=only)
+
+    def __get_autoincrement_for_bucket(self, bucket):
+        if isinstance(self.__autoincrement, dict):
+            return self.__autoincrement.get(bucket)
+        return self.__autoincrement

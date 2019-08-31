@@ -163,14 +163,14 @@ class Mapper(object):
             return table_name.replace(self.__prefix, '', 1)
         return None
 
-    def restore_descriptor(self, table_name, columns, constraints, autoincrement_column=None):
+    def restore_descriptor(self, table_name, columns, constraints, autoincrement=None):
         """Restore descriptor from SQL
         """
 
         # Fields
         fields = []
         for column in columns:
-            if column.name == autoincrement_column:
+            if column.name == autoincrement:
                 continue
             field_type = self.restore_type(column.type)
             field = {'name': column.name, 'type': field_type}
@@ -183,7 +183,7 @@ class Mapper(object):
         for constraint in constraints:
             if isinstance(constraint, sa.PrimaryKeyConstraint):
                 for column in constraint.columns:
-                    if column.name == autoincrement_column:
+                    if column.name == autoincrement:
                         continue
                     pk.append(column.name)
 
@@ -220,11 +220,11 @@ class Mapper(object):
 
         return descriptor
 
-    def restore_row(self, row, schema):
+    def restore_row(self, row, schema, autoincrement):
         """Restore row from SQL
         """
         row = list(row)
-        for index, field in enumerate(schema.fields):
+        for index, field in enumerate(schema.fields, start=1 if autoincrement else 0):
             if self.__dialect == 'postgresql':
                 if field.type in ['array', 'object']:
                     continue

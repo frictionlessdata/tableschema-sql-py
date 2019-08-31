@@ -62,12 +62,14 @@ Package implements [Tabular Storage](https://github.com/frictionlessdata/tablesc
 
 This driver provides an additional API:
 
-#### `Storage(engine, dbschema=None, prefix='', reflect_only=None, autoincrement=False)`
+#### `Storage(engine, dbschema=None, prefix='', reflect_only=None, autoincrement=None)`
 - `engine (object)` - `sqlalchemy` engine
 - `dbschema (str)` - name of database schema
 - `prefix (str)` - prefix for all buckets
 - `reflect_only (callable)` - a boolean predicate to filter the list of table names when reflecting
-- `autoincrement (bool)` - add autoincrement column at the beginning
+- `autoincrement (str/dict)` - add autoincrement column at the beginning.
+  - if a string it's an autoincrement column name
+  - if a dict it's an autoincrements mapping with column names indexed by bucket names, for example, `{'bucket1': 'id', 'bucket2': 'other_id}`
 
 #### `storage.create(..., indexes_fields=None)`
 

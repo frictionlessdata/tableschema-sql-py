@@ -33,9 +33,10 @@ class Storage(tableschema.Storage):
         self.__fallbacks = {}
         self.__autoincrement = autoincrement
         self.__only = reflect_only or (lambda _: True)
+        self.__dialect = engine.dialect.name
 
         # Create mapper
-        self.__mapper = Mapper(prefix=prefix, dialect=engine.dialect.name)
+        self.__mapper = Mapper(prefix=prefix, dialect=self.__dialect)
 
         # Create metadata and reflect
         self.__metadata = MetaData(bind=self.__connection, schema=self.__dbschema)
@@ -203,8 +204,12 @@ class Storage(tableschema.Storage):
 
         # Write rows to table
         convert_row = partial(self.__mapper.convert_row, schema=schema, fallbacks=fallbacks)
-        autoincrement = self.__get_autoincrement_for_bucket(bucket)
-        writer = Writer(table, schema, update_keys, autoincrement, convert_row)
+        autoincrement =  self.__get_autoincrement_for_bucket(bucket)
+        writer = Writer(table, schema,
+            # Only PostgreSQL supports "returning" so we don't use autoincrement for all
+            autoincrement=autoincrement if self.__dialect in ['postgresql'] else None,
+            update_keys=update_keys,
+            convert_row=convert_row)
         with self.__connection.begin():
             gen = writer.write(rows, keyed=keyed)
             if as_generator:

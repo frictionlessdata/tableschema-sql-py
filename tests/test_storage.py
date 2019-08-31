@@ -497,7 +497,7 @@ def test_storage_bigdata_rollback():
 
 @pytest.mark.parametrize('dialect, database_url', [
     ('postgresql', os.environ['POSTGRES_URL']),
-    #  ('sqlite', os.environ['SQLITE_URL']),
+    ('sqlite', os.environ['SQLITE_URL']),
 ])
 def test_storage_autoincrement_string(dialect, database_url):
     RESOURCE = {
@@ -527,7 +527,7 @@ def test_storage_autoincrement_string(dialect, database_url):
 
 @pytest.mark.parametrize('dialect, database_url', [
     ('postgresql', os.environ['POSTGRES_URL']),
-    #  ('sqlite', os.environ['SQLITE_URL']),
+    ('sqlite', os.environ['SQLITE_URL']),
 ])
 def test_storage_autoincrement_mapping(dialect, database_url):
     RESOURCE = {

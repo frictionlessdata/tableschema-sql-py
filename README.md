@@ -67,7 +67,9 @@ This driver provides an additional API:
 - `dbschema (str)` - name of database schema
 - `prefix (str)` - prefix for all buckets
 - `reflect_only (callable)` - a boolean predicate to filter the list of table names when reflecting
-- `autoincrement (str)` - add autoincrement column at the beginning. This parameter is a name of the column.
+- `autoincrement (str/dict)` - add autoincrement column at the beginning.
+  - if a string it's an autoincrement column name
+  - if a dict it's an autoincrements mapping with column names indexed by bucket names, for example, `{'bucket1': 'id', 'bucket2': 'other_id}`
 
 #### `storage.create(..., indexes_fields=None)`
 

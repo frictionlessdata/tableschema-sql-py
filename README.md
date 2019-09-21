@@ -3,6 +3,7 @@
 [![Travis](https://img.shields.io/travis/frictionlessdata/tableschema-sql-py/master.svg)](https://travis-ci.org/frictionlessdata/tableschema-sql-py)
 [![Coveralls](http://img.shields.io/coveralls/frictionlessdata/tableschema-sql-py/master.svg)](https://coveralls.io/r/frictionlessdata/tableschema-sql-py?branch=master)
 [![PyPi](https://img.shields.io/pypi/v/tableschema-sql.svg)](https://pypi.python.org/pypi/tableschema-sql)
+[![Github](https://img.shields.io/badge/github-master-brightgreen)](https://github.com/frictionlessdata/tableschema-sql-py)
 [![Gitter](https://img.shields.io/gitter/room/frictionlessdata/chat.svg)](https://gitter.im/frictionlessdata/chat)
 
 Generate and load SQL tables based on [Table Schema](http://specs.frictionlessdata.io/table-schema/) descriptors.

@@ -24,7 +24,7 @@ INSTALL_REQUIRES = [
     'six>=1.9',
     'sqlalchemy>=1.0',
     'pybloom_live>=2.2',
-    'tabulator>=1.0.0a5',
+    'tabulator>=1.1',
     'tableschema>=1.0',
 ]
 TESTS_REQUIRE = [

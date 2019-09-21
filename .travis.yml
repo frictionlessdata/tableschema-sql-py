@@ -1,4 +1,6 @@
-dist: xenial
+dist:
+  xenial
+
 sudo:
   false
 

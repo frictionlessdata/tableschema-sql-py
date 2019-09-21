@@ -28,11 +28,12 @@ INSTALL_REQUIRES = [
     'tableschema>=1.0',
 ]
 TESTS_REQUIRE = [
-    'psycopg2',
-    'pymysql',
+    'mock',
     'pylama',
     'pytest',
-    'mock',
+    'pytest-cov',
+    'psycopg2',
+    'pymysql',
     'tox',
 ]
 EXAMPLES_REQUIRE = [

@@ -81,6 +81,8 @@ This driver provides an additional API:
 - `keyed (bool)` - accept keyed rows
 - `as_generator (bool)` - returns generator to provide writing control to the client
 - `update_keys (str[])` - update instead of inserting if key values match existent rows
+- `buffer_size (int=1000)` - maximum number of rows to try and write to the db in one batch
+- `use_bloom_filter (bool=True)` - should we use a bloom filter to optimize DB update performance (in exchange for some setup time)
 
 ## Contributing
 

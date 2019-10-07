@@ -319,7 +319,13 @@ def test_storage_write_generator():
     assert storage.read('comments') == cast(COMMENTS)['data']
 
 
-def test_storage_update():
+@pytest.mark.parametrize('use_bloom_filter, buffer_size', [
+    (True, 1000),
+    (False, 1000),
+    (True, 2),
+    (False, 1),
+])
+def test_storage_update(use_bloom_filter, buffer_size):
     RESOURCE = {
         'schema': {
             'fields': [
@@ -359,7 +365,8 @@ def test_storage_update():
     # Write data to buckets
     storage.write('colors', RESOURCE['data'], update_keys=update_keys)
     gen = storage.write('colors', RESOURCE['updateData'],
-        update_keys=update_keys, as_generator=True)
+        update_keys=update_keys, as_generator=True,
+        use_bloom_filter=use_bloom_filter, buffer_size=buffer_size)
     gen = list(gen)
     assert len(gen) == 5
     assert len(list(filter(lambda i: i.updated, gen))) == 3
@@ -368,7 +375,8 @@ def test_storage_update():
     # Reflect storage
     storage = Storage(engine=engine, prefix='test_update_', autoincrement='__id')
     gen = storage.write('colors', RESOURCE['updateData'],
-        update_keys=update_keys, as_generator=True)
+        update_keys=update_keys, as_generator=True,
+        use_bloom_filter=use_bloom_filter, buffer_size=buffer_size)
     gen = list(gen)
     assert len(gen) == 5
     assert len(list(filter(lambda i: i.updated, gen))) == 5
@@ -394,9 +402,11 @@ def test_storage_update():
     storage = Storage(engine=engine, prefix='test_update_')
     storage.delete()
     storage.create('colors', RESOURCE['schema'])
-    storage.write('colors', RESOURCE['data'], update_keys=update_keys)
+    storage.write('colors', RESOURCE['data'], update_keys=update_keys,
+                  use_bloom_filter=use_bloom_filter, buffer_size=buffer_size)
     gen = storage.write('colors', RESOURCE['updateData'],
-        update_keys=update_keys, as_generator=True)
+        update_keys=update_keys, as_generator=True,
+        use_bloom_filter=use_bloom_filter, buffer_size=buffer_size)
     gen = list(gen)
     assert len(gen) == 5
     assert len(list(filter(lambda i: i.updated, gen))) == 3

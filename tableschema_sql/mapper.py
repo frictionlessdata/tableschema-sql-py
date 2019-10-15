@@ -70,6 +70,8 @@ class Mapper(object):
                     checks.append(Check('"%s" <= %s' % (field.name, value)))
                 elif name == 'pattern':
                     checks.append(Check('"%s" like \'%s\'' % (field.name, value)))
+                elif name == 'enum':
+                    column_type = sa.Enum(*value, name='%s_enum' % field.name)
             column = sa.Column(*([field.name, column_type] + checks),
                 nullable=nullable, comment=comment, unique=unique)
             columns.append(column)

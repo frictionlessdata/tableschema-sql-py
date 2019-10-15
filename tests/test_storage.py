@@ -9,6 +9,7 @@ import io
 import json
 import pytest
 import tableschema
+import sqlalchemy as sa
 from copy import deepcopy
 from tabulator import Stream
 from sqlalchemy import create_engine
@@ -565,6 +566,51 @@ def test_storage_autoincrement_mapping(dialect, database_url):
         ['paris'],
         ['rome'],
     ]
+
+
+@pytest.mark.parametrize('dialect, database_url', [
+    ('postgresql', os.environ['POSTGRES_URL']),
+    ('sqlite', os.environ['SQLITE_URL']),
+    #  ('mysql', os.environ['MYSQL_URL']),
+])
+def test_storage_constraints(dialect, database_url):
+    schema = {
+        'fields': [
+            {'name': 'minLengthField', 'type': 'string', 'constraints': {'minLength': 5}},
+            {'name': 'maxLengthField', 'type': 'string', 'constraints': {'maxLength': 5}},
+            {'name': 'minimumField', 'type': 'number', 'constraints': {'minimum': 5}},
+            {'name': 'maximumField', 'type': 'number', 'constraints': {'maximum': 5}},
+        ]
+    }
+
+    # Create table
+    engine = create_engine(database_url)
+    storage = Storage(engine, prefix='test_storage_constraints_')
+    storage.create('bucket', schema, force=True)
+    table_name = 'test_storage_constraints_bucket'
+
+    # Write valid data
+    storage.write('bucket', [['aaaaa', 'aaaaa', 5, 5]])
+
+    # Write invalid data (minLength)
+    with pytest.raises(sa.exc.IntegrityError) as excinfo:
+        engine.execute("INSERT INTO %s VALUES('a', 'aaaaa', 5, 5)" % table_name)
+        assert 'minLengthField' in str(excinfo.value)
+
+    # Write invalid data (maxLength)
+    with pytest.raises(sa.exc.IntegrityError) as excinfo:
+        engine.execute("INSERT INTO %s VALUES('aaaaa', 'aaaaaaaaa', 5, 5)" % table_name)
+        assert 'maxLengthField' in str(excinfo.value)
+
+    # Write invalid data (minimum)
+    with pytest.raises(sa.exc.IntegrityError) as excinfo:
+        engine.execute("INSERT INTO %s VALUES('aaaaa', 'aaaaa', 1, 5)" % table_name)
+        assert 'minimumField' in str(excinfo.value)
+
+    # Write invalid data (maximum)
+    with pytest.raises(sa.exc.IntegrityError) as excinfo:
+        engine.execute("INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 9)" % table_name)
+        assert 'maximumField' in str(excinfo.value)
 
 
 # Helpers

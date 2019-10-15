@@ -576,10 +576,11 @@ def test_storage_autoincrement_mapping(dialect, database_url):
 def test_storage_constraints(dialect, database_url):
     schema = {
         'fields': [
-            {'name': 'minLengthField', 'type': 'string', 'constraints': {'minLength': 5}},
-            {'name': 'maxLengthField', 'type': 'string', 'constraints': {'maxLength': 5}},
-            {'name': 'minimumField', 'type': 'number', 'constraints': {'minimum': 5}},
-            {'name': 'maximumField', 'type': 'number', 'constraints': {'maximum': 5}},
+            {'name': 'stringMinLength', 'type': 'string', 'constraints': {'minLength': 5}},
+            {'name': 'stringMaxLength', 'type': 'string', 'constraints': {'maxLength': 5}},
+            {'name': 'numberMinimum', 'type': 'number', 'constraints': {'minimum': 5}},
+            {'name': 'numberMaximum', 'type': 'number', 'constraints': {'maximum': 5}},
+            {'name': 'stringPattern', 'type': 'string', 'constraints': {'pattern': 'test'}},
         ]
     }
 
@@ -590,27 +591,37 @@ def test_storage_constraints(dialect, database_url):
     table_name = 'test_storage_constraints_bucket'
 
     # Write valid data
-    storage.write('bucket', [['aaaaa', 'aaaaa', 5, 5]])
+    storage.write('bucket', [['aaaaa', 'aaaaa', 5, 5, 'test']])
 
-    # Write invalid data (minLength)
+    # Write invalid data (stringMinLength)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        engine.execute("INSERT INTO %s VALUES('a', 'aaaaa', 5, 5)" % table_name)
-        assert 'minLengthField' in str(excinfo.value)
+        pattern = "INSERT INTO %s VALUES('a', 'aaaaa', 5, 5, 'test')"
+        engine.execute(pattern % table_name)
+        assert 'stringMinLength' in str(excinfo.value)
 
-    # Write invalid data (maxLength)
+    # Write invalid data (stringMaxLength)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        engine.execute("INSERT INTO %s VALUES('aaaaa', 'aaaaaaaaa', 5, 5)" % table_name)
-        assert 'maxLengthField' in str(excinfo.value)
+        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaaaaaa', 5, 5, 'test')"
+        engine.execute(pattern % table_name)
+        assert 'stringMaxLength' in str(excinfo.value)
 
-    # Write invalid data (minimum)
+    # Write invalid data (numberMinimum)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        engine.execute("INSERT INTO %s VALUES('aaaaa', 'aaaaa', 1, 5)" % table_name)
-        assert 'minimumField' in str(excinfo.value)
+        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 1, 5, 'test')"
+        engine.execute(pattern % table_name)
+        assert 'numberMinimum' in str(excinfo.value)
 
-    # Write invalid data (maximum)
+    # Write invalid data (numberMaximum)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        engine.execute("INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 9)" % table_name)
-        assert 'maximumField' in str(excinfo.value)
+        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 9, 'test')"
+        engine.execute(pattern % table_name)
+        assert 'numberMaximum' in str(excinfo.value)
+
+    # Write invalid data (stringPattern)
+    with pytest.raises(sa.exc.IntegrityError) as excinfo:
+        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 9, 'bad')"
+        engine.execute(pattern % table_name)
+        assert 'stringPattern' in str(excinfo.value)
 
 
 # Helpers

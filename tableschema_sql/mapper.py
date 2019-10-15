@@ -68,6 +68,8 @@ class Mapper(object):
                     checks.append(Check('"%s" >= %s' % (field.name, value)))
                 elif name == 'maximum':
                     checks.append(Check('"%s" <= %s' % (field.name, value)))
+                elif name == 'pattern':
+                    checks.append(Check('"%s" like \'%s\'' % (field.name, value)))
             column = sa.Column(*([field.name, column_type] + checks),
                 nullable=nullable, comment=comment, unique=unique)
             columns.append(column)

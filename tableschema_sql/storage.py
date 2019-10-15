@@ -8,6 +8,7 @@ import collections
 from functools import partial
 
 import six
+import sqlalchemy
 import tableschema
 from sqlalchemy import Table, MetaData
 
@@ -106,7 +107,12 @@ class Storage(tableschema.Storage):
             self.__fallbacks[bucket] = fallbacks
 
         # Create tables, update metadata
-        self.__metadata.create_all()
+        try:
+            self.__metadata.create_all()
+        except sqlalchemy.exc.ProgrammingError as exception:
+            if 'there is no unique constraint matching given keys' in str(exception):
+                message = 'Foreign keys can only reference primary key or unique fields\n%s'
+                raise tableschema.exceptions.ValidationError(message % str(exception)) from None
 
     def delete(self, bucket=None, ignore=False):
         """https://github.com/frictionlessdata/tableschema-sql-py#storage

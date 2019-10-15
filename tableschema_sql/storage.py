@@ -112,7 +112,9 @@ class Storage(tableschema.Storage):
         except sqlalchemy.exc.ProgrammingError as exception:
             if 'there is no unique constraint matching given keys' in str(exception):
                 message = 'Foreign keys can only reference primary key or unique fields\n%s'
-                raise tableschema.exceptions.ValidationError(message % str(exception)) from None
+                six.raise_from(
+                    tableschema.exceptions.ValidationError(message % str(exception)),
+                    None)
 
     def delete(self, bucket=None, ignore=False):
         """https://github.com/frictionlessdata/tableschema-sql-py#storage

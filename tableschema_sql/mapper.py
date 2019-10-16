@@ -71,7 +71,7 @@ class Mapper(object):
                 elif name == 'pattern':
                     checks.append(Check('"%s" like \'%s\'' % (field.name, value)))
                 elif name == 'enum':
-                    column_type = sa.Enum(*value, name='%s_enum' % field.name)
+                    column_type = sa.Enum(*value, name='%s_%s_enum' % (table_name, field.name))
             column = sa.Column(*([field.name, column_type] + checks),
                 nullable=nullable, comment=comment, unique=unique)
             columns.append(column)

@@ -7,8 +7,9 @@ from __future__ import unicode_literals
 import json
 
 import six
-import sqlalchemy as sa
 import tableschema
+import sqlalchemy as sa
+from sqlalchemy import CheckConstraint as Check
 from sqlalchemy.dialects.postgresql import ARRAY, JSON, JSONB, UUID
 
 
@@ -40,7 +41,7 @@ class Mapper(object):
         constraints = []
         column_mapping = {}
         table_name = self.convert_bucket(bucket)
-        table_comment = _get_comment(descriptor.get('title', ''), descriptor.get('description', ''))
+        comment = _get_comment(descriptor.get('title', ''), descriptor.get('description', ''))
         schema = tableschema.Schema(descriptor)
 
         # Autoincrement
@@ -55,10 +56,24 @@ class Mapper(object):
                 column_type = sa.Text
                 fallbacks.append(field.name)
             nullable = not field.required
-            table_comment = _get_field_comment(field)
+            comment = _get_field_comment(field)
             unique = field.constraints.get('unique', False)
-            column = sa.Column(field.name, column_type, nullable=nullable, comment=table_comment,
-                               unique=unique)
+            checks = []
+            for name, value in field.constraints.items():
+                if name == 'minLength':
+                    checks.append(Check('LENGTH("%s") >= %s' % (field.name, value)))
+                elif name == 'maxLength':
+                    checks.append(Check('LENGTH("%s") <= %s' % (field.name, value)))
+                elif name == 'minimum':
+                    checks.append(Check('"%s" >= %s' % (field.name, value)))
+                elif name == 'maximum':
+                    checks.append(Check('"%s" <= %s' % (field.name, value)))
+                elif name == 'pattern':
+                    checks.append(Check('"%s" like \'%s\'' % (field.name, value)))
+                elif name == 'enum':
+                    column_type = sa.Enum(*value, name='%s_%s_enum' % (table_name, field.name))
+            column = sa.Column(*([field.name, column_type] + checks),
+                nullable=nullable, comment=comment, unique=unique)
             columns.append(column)
             column_mapping[field.name] = column
 
@@ -101,7 +116,7 @@ class Mapper(object):
                 index_columns = [column_mapping[field] for field in index_definition]
                 indexes.append(sa.Index(name, *index_columns))
 
-        return columns, constraints, indexes, fallbacks, table_comment
+        return columns, constraints, indexes, fallbacks, comment
 
     def convert_row(self, keyed_row, schema, fallbacks):
         """Convert row to SQL

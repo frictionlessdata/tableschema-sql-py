@@ -128,6 +128,10 @@ and `mock` packages. This packages are available only in tox envionments.
 
 Here described only breaking and the most important changes. The full changelog and documentation for all released versions could be found in nicely formatted [commit history](https://github.com/frictionlessdata/tableschema-sql-py/commits/master).
 
+#### v1.3
+
+- Implemented constraints loading to a database
+
 #### v1.2
 
 - Add option to configure buffer size, bloom filter use (#77)

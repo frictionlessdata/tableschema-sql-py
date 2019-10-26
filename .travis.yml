@@ -39,12 +39,18 @@ script:
 after_success:
   - coveralls
 
-deploy:
-  provider: pypi
-  user: roll
-  distributions: sdist bdist_wheel
-  skip_cleanup: true
-  on:
-    tags: true
-  password:
-    secure: T2DlIzbiLOrOv0Ox2wPaaoEA701dZufaE/MaSn80gL56zbV/NEMNRYK2aH2mpjFDPDHVkXnAT2LemXG8njhVw6XwFxEqwvFb04DtudpBCdzrPfGeq/Q3erl34mMkeV6+KaSTlAxZqCVhUOfSbwyFU1Abe1ASrFwjYrFhGEk/VpG94SYUthzZU+YT92dfYGTISEiQdeOi4B69hnKJ5Tchl4LL+OnPss2AS//ArZMmqWvG6ftP3Cavwt49fU4lGyfQSNEmsZXwKadBa9HMHPmXcucGH9b8ezM7KoPR82yWys4VFuFsKzsZJn2wW9hRDvKIJqCnd84Op9ys9pF8yzqEL/w1w2xpJswMrs8CNR2WJVcjP4OKrr/d/cQ0dJnNO0MbIXVL3FKS1m8cOAvELoOT6swr/xdMfV+oAPL66nYP9/oYaHt3qmI7kgqUnWyVVfi6ZcjdM893cg9LHTTPrQhvwu9vsIuFFVtPrdNUxo01zeQ1fssnxZ7WWHScM4Dcq6HmhcPug/ZQ109lfdvZddAwPxoL6WOyoH3Fbo4EXdxrVD8lxu7BRFsNMcuNjsNCimPvaoHKZK+WFZv71Vl1tep05WCvc35rkCJcP9SxiJnlJZLUYB8Feed9q8/DWEruDjKCW1/79xZCpudrfKb+S+wnViIf04pvj/S7pRYqxtEg6OU=
+
+jobs:
+  include:
+    - stage: release
+      if: tag IS present
+      python: 3.8
+      deploy:
+        provider: pypi
+        user: roll
+        distributions: sdist bdist_wheel
+        skip_cleanup: true
+        on:
+          tags: true
+        password:
+          secure: T2DlIzbiLOrOv0Ox2wPaaoEA701dZufaE/MaSn80gL56zbV/NEMNRYK2aH2mpjFDPDHVkXnAT2LemXG8njhVw6XwFxEqwvFb04DtudpBCdzrPfGeq/Q3erl34mMkeV6+KaSTlAxZqCVhUOfSbwyFU1Abe1ASrFwjYrFhGEk/VpG94SYUthzZU+YT92dfYGTISEiQdeOi4B69hnKJ5Tchl4LL+OnPss2AS//ArZMmqWvG6ftP3Cavwt49fU4lGyfQSNEmsZXwKadBa9HMHPmXcucGH9b8ezM7KoPR82yWys4VFuFsKzsZJn2wW9hRDvKIJqCnd84Op9ys9pF8yzqEL/w1w2xpJswMrs8CNR2WJVcjP4OKrr/d/cQ0dJnNO0MbIXVL3FKS1m8cOAvELoOT6swr/xdMfV+oAPL66nYP9/oYaHt3qmI7kgqUnWyVVfi6ZcjdM893cg9LHTTPrQhvwu9vsIuFFVtPrdNUxo01zeQ1fssnxZ7WWHScM4Dcq6HmhcPug/ZQ109lfdvZddAwPxoL6WOyoH3Fbo4EXdxrVD8lxu7BRFsNMcuNjsNCimPvaoHKZK+WFZv71Vl1tep05WCvc35rkCJcP9SxiJnlJZLUYB8Feed9q8/DWEruDjKCW1/79xZCpudrfKb+S+wnViIf04pvj/S7pRYqxtEg6OU=

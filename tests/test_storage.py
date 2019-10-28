@@ -593,7 +593,7 @@ def test_storage_constraints(dialect, database_url):
         def regexp(expr, item):
             reg = re.compile(expr)
             return reg.search(item) is not None
-        conn = engine.connection()
+        conn = engine.connect()
         conn.connection.create_function("REGEXP", 2, regexp)
 
 

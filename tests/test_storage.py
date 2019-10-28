@@ -570,7 +570,7 @@ def test_storage_autoincrement_mapping(dialect, database_url):
 
 @pytest.mark.parametrize('dialect, database_url', [
     ('postgresql', os.environ['POSTGRES_URL']),
-    ('sqlite', os.environ['SQLITE_URL']),
+    ('sqlite', 'sqlite:///constraints.db'),
     #  ('mysql', os.environ['MYSQL_URL']),
 ])
 def test_storage_constraints(dialect, database_url):
@@ -588,15 +588,16 @@ def test_storage_constraints(dialect, database_url):
     # Create table
     engine = create_engine(database_url)
 
-    storage = Storage(engine, prefix='test_storage_constraints_')
-
     if dialect == 'sqlite':
         import re
         def regexp(expr, item):
             reg = re.compile(expr)
             return reg.search(item) is not None
-        storage.__connection.create_function("REGEXP", 2, regexp)
+        conn = engine.connection()
+        conn.connection.create_function("REGEXP", 2, regexp)
 
+
+    storage = Storage(engine, prefix='test_storage_constraints_')
     storage.create('bucket', schema, force=True)
     table_name = 'test_storage_constraints_bucket'
 

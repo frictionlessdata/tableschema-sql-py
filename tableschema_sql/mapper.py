@@ -69,7 +69,10 @@ class Mapper(object):
                 elif name == 'maximum':
                     checks.append(Check('"%s" <= %s' % (field.name, value)))
                 elif name == 'pattern':
-                    checks.append(Check('"%s" ~ \'%s\'' % (field.name, value)))
+                    if self.__dialect in ['postgresql']:
+                        checks.append(Check('"%s" ~ \'%s\'' % (field.name, value)))
+                    else:
+                        checks.append(Check('"%s" REGEXP \'%s\'' % (field.name, value)))
                 elif name == 'enum':
                     column_type = sa.Enum(*value, name='%s_%s_enum' % (table_name, field.name))
             column = sa.Column(*([field.name, column_type] + checks),

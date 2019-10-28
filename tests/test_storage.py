@@ -580,7 +580,7 @@ def test_storage_constraints(dialect, database_url):
             {'name': 'stringMaxLength', 'type': 'string', 'constraints': {'maxLength': 5}},
             {'name': 'numberMinimum', 'type': 'number', 'constraints': {'minimum': 5}},
             {'name': 'numberMaximum', 'type': 'number', 'constraints': {'maximum': 5}},
-            {'name': 'stringPattern', 'type': 'string', 'constraints': {'pattern': 'test'}},
+            {'name': 'stringPattern', 'type': 'string', 'constraints': {'pattern': '^[a-z]+$'}},
             {'name': 'stringEnum', 'type': 'string', 'constraints': {'enum': ['test']}},
         ]
     }
@@ -616,7 +616,7 @@ def test_storage_constraints(dialect, database_url):
 
     # Write invalid data (stringPattern)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 5, 'bad', 'test')"
+        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 5, 'bad1', 'test')"
         engine.execute(pattern % table_name)
 
     # Write invalid data (stringEnum)

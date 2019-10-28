@@ -586,7 +586,7 @@ def test_storage_constraints(dialect, database_url):
     }
 
     # Create table
-    engine: sqlalchemy.engine.Engine = create_engine(database_url)
+    engine = create_engine(database_url)
 
     if dialect == 'sqlite':
         import re

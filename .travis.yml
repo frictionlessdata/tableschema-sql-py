@@ -23,7 +23,7 @@ env:
   global:
     - TOXENV="py${PYTHON_VERSION//./}"
     - POSTGRES_URL=postgresql://postgres@localhost:5432/postgres
-    - SQLITE_URL=sqlite:///:memory:
+    - SQLITE_URL='sqlite:///:memory:'
     - MYSQL_URL=mysql+pymysql://root@localhost:3306/test?charset=utf8
 
 before_install:

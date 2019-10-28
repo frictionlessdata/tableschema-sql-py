@@ -586,7 +586,16 @@ def test_storage_constraints(dialect, database_url):
     }
 
     # Create table
-    engine = create_engine(database_url)
+    engine: sqlalchemy.engine.Engine = create_engine(database_url)
+
+    if dialect == 'sqlite':
+        import re
+        def regexp(expr, item):
+            reg = re.compile(expr)
+            return reg.search(item) is not None
+        conn = engine.connect()
+        conn.connection.create_function("REGEXP", 2, regexp)
+
     storage = Storage(engine, prefix='test_storage_constraints_')
     storage.create('bucket', schema, force=True)
     table_name = 'test_storage_constraints_bucket'

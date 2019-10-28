@@ -2,7 +2,7 @@ dist:
   xenial
 
 sudo:
-  required
+  false
 
 addons:
   postgresql: "9.4"
@@ -28,8 +28,6 @@ env:
 
 before_install:
   - mysql -e 'CREATE DATABASE test CHARACTER SET utf8 COLLATE utf8_general_ci;'
-  - sudo apt-get install sqlite3-pcre
-  - echo ".load /usr/lib/sqlite3/pcre.so" > ~/.sqliterc
 
 install:
   - make install

@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import collections
 from functools import partial
 
+import re
 import six
 import sqlalchemy
 import tableschema
@@ -35,6 +36,14 @@ class Storage(tableschema.Storage):
         self.__autoincrement = autoincrement
         self.__only = reflect_only or (lambda _: True)
         self.__dialect = engine.dialect.name
+
+        # Added regex support to sqlite
+        if self.__dialect == 'sqlite':
+            def regexp(expr, item):
+                reg = re.compile(expr)
+                return reg.search(item) is not None
+            # It will fail silently if this function already exists
+            self.__connection.connection.create_function('REGEXP', 2, regexp)
 
         # Create mapper
         self.__mapper = Mapper(prefix=prefix, dialect=self.__dialect)

@@ -132,6 +132,18 @@ Here described only breaking and the most important changes. The full changelog 
 
 - Implemented constraints loading to a database
 
+##### Adding regular expression support to sqlite:
+```python
+import re
+
+def regexp(expr, item):
+  reg = re.compile(expr)
+  return reg.search(item) is not None
+
+conn = engine.connect()
+conn.connection.create_function("REGEXP", 2, regexp)
+```
+
 #### v1.2
 
 - Add option to configure buffer size, bloom filter use (#77)

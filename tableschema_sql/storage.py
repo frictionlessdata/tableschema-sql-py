@@ -20,12 +20,34 @@ from .writer import Writer
 # Module API
 
 class Storage(tableschema.Storage):
+    """SQL storage
+
+    Package implements
+    [Tabular Storage](https://github.com/frictionlessdata/tableschema-py#storage)
+    interface (see full documentation on the link):
+
+    ![Storage](https://i.imgur.com/RQgrxqp.png)
+
+    > Only additional API is documented
+
+    # Arguments
+        engine (object): `sqlalchemy` engine
+        dbschema (str): name of database schema
+        prefix (str): prefix for all buckets
+        reflect_only (callable):
+            a boolean predicate to filter the list of table names when reflecting
+        autoincrement (str/dict):
+            add autoincrement column at the beginning.
+              - if a string it's an autoincrement column name
+              - if a dict it's an autoincrements mapping with column
+                names indexed by bucket names, for example,
+                `{'bucket1'\\: 'id', 'bucket2'\\: 'other_id}`
+
+    """
 
     # Public
 
     def __init__(self, engine, dbschema=None, prefix='', reflect_only=None, autoincrement=None):
-        """https://github.com/frictionlessdata/tableschema-sql-py#storage
-        """
 
         # Set attributes
         self.__connection = engine.connect()
@@ -53,8 +75,6 @@ class Storage(tableschema.Storage):
         self.__reflect()
 
     def __repr__(self):
-        """https://github.com/frictionlessdata/tableschema-sql-py#storage
-        """
 
         # Template and format
         template = 'Storage <{engine}/{dbschema}>'
@@ -66,8 +86,6 @@ class Storage(tableschema.Storage):
 
     @property
     def buckets(self):
-        """https://github.com/frictionlessdata/tableschema-sql-py#storage
-        """
         buckets = []
         for table in self.__metadata.sorted_tables:
             bucket = self.__mapper.restore_bucket(table.name)
@@ -76,7 +94,12 @@ class Storage(tableschema.Storage):
         return buckets
 
     def create(self, bucket, descriptor, force=False, indexes_fields=None):
-        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """Create bucket
+
+        # Arguments
+            indexes_fields (str[]):
+                list of tuples containing field names, or list of such lists
+
         """
 
         # Make lists
@@ -126,8 +149,6 @@ class Storage(tableschema.Storage):
                     None)
 
     def delete(self, bucket=None, ignore=False):
-        """https://github.com/frictionlessdata/tableschema-sql-py#storage
-        """
 
         # Make lists
         buckets = bucket
@@ -161,8 +182,6 @@ class Storage(tableschema.Storage):
         self.__reflect()
 
     def describe(self, bucket, descriptor=None):
-        """https://github.com/frictionlessdata/tableschema-sql-py#storage
-        """
 
         # Set descriptor
         if descriptor is not None:
@@ -180,8 +199,6 @@ class Storage(tableschema.Storage):
         return descriptor
 
     def iter(self, bucket):
-        """https://github.com/frictionlessdata/tableschema-sql-py#storage
-        """
 
         # Get table and fallbacks
         table = self.__get_table(bucket)
@@ -200,14 +217,26 @@ class Storage(tableschema.Storage):
                 yield row
 
     def read(self, bucket):
-        """https://github.com/frictionlessdata/tableschema-sql-py#storage
-        """
         rows = list(self.iter(bucket))
         return rows
 
     def write(self, bucket, rows, keyed=False, as_generator=False, update_keys=None,
               buffer_size=1000, use_bloom_filter=True):
-        """https://github.com/frictionlessdata/tableschema-sql-py#storage
+        """Write to bucket
+
+        # Arguments
+            keyed (bool):
+                accept keyed rows
+            as_generator (bool):
+                returns generator to provide writing control to the client
+            update_keys (str[]):
+                update instead of inserting if key values match existent rows
+            buffer_size (int=1000):
+                maximum number of rows to try and write to the db in one batch
+            use_bloom_filter (bool=True):
+                should we use a bloom filter to optimize DB update performance
+                (in exchange for some setup time)
+
         """
 
         # Check update keys

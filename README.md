@@ -40,6 +40,7 @@ pip install tableschema-sql
 ## Documentation
 
 ```python
+from datapackage import Package 
 from tableschema import Table
 from sqlalchemy import create_engine
 

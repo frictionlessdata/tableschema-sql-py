@@ -13,6 +13,7 @@ import sqlalchemy as sa
 from copy import deepcopy
 from tabulator import Stream
 from sqlalchemy import create_engine
+from sqlalchemy.engine import reflection
 from tableschema_sql import Storage
 from dotenv import load_dotenv; load_dotenv('.env')
 
@@ -623,6 +624,24 @@ def test_storage_constraints(dialect, database_url):
     with pytest.raises((sa.exc.DataError, sa.exc.IntegrityError)) as excinfo:
         pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 5, 'test', 'bad')"
         engine.execute(pattern % table_name)
+
+
+@pytest.mark.parametrize('dialect, database_url', [
+    ('postgresql', os.environ['POSTGRES_URL']),
+    ('sqlite', os.environ['SQLITE_URL']),
+])
+def test_indexes_fields(dialect, database_url):
+    engine = create_engine(database_url)
+    storage = Storage(engine=engine, prefix='test_indexes_fields_')
+    storage.delete()
+    storage.create(
+        ['articles'], [ARTICLES['schema']],
+        indexes_fields=[[['rating'], ['name']]]
+    )
+    storage.write('articles', ARTICLES['data'])
+    inspector = reflection.Inspector.from_engine(engine)
+    indexes = [index for index in [inspector.get_indexes(table_name) for table_name in inspector.get_table_names()]][0]
+    assert indexes
 
 
 # Helpers

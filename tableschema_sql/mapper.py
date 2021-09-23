@@ -113,7 +113,7 @@ class Mapper(object):
                 constraints.append(constraint)
 
         # Indexes
-        if self.__dialect == 'postgresql':
+        if self.__dialect in ('postgresql', 'sqlite'):
             for index, index_definition in enumerate(index_fields):
                 name = table_name + '_ix%03d' % index
                 index_columns = [column_mapping[field] for field in index_definition]

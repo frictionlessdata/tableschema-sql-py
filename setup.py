@@ -28,17 +28,16 @@ INSTALL_REQUIRES = [
     'tableschema>=1.0',
 ]
 TESTS_REQUIRE = [
+    'coverage',
     'mock',
     'pylama',
     'pytest',
     'pytest-cov',
     'psycopg2',
     'pymysql',
-    'tox',
-]
-EXAMPLES_REQUIRE = [
     'python-dotenv',
 ]
+
 README = read('README.md')
 VERSION = read(PACKAGE, 'VERSION')
 PACKAGES = find_packages(exclude=['examples', 'tests'])
@@ -52,7 +51,7 @@ setup(
     include_package_data=True,
     install_requires=INSTALL_REQUIRES,
     tests_require=TESTS_REQUIRE,
-    extras_require={'develop': TESTS_REQUIRE + EXAMPLES_REQUIRE},
+    extras_require={'develop': TESTS_REQUIRE},
     zip_safe=False,
     long_description=README,
     long_description_content_type='text/markdown',

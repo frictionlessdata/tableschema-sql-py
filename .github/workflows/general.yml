@@ -34,12 +34,14 @@ jobs:
       mysql:
         image: mysql
         env:
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
           MYSQL_DATABASE: test_db
         options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=3
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
         ports:
           - 3306:3306
     steps:
@@ -56,7 +58,7 @@ jobs:
           TOXENV: "py${PYTHON_VERSION//./}"
           POSTGRES_URL: postgresql://postgres@localhost:5432/postgres
           SQLITE_URL: 'sqlite:///:memory:'
-          MYSQL_URL: mysql+pymysql://root@localhost:3306/test_db?charset=utf8
+          MYSQL_URL: mysql+pymysql://test_user:test_password@localhost:3306/test_db?charset=utf8
         run: make test
       - name: Report coverage
         uses: codecov/codecov-action@v1

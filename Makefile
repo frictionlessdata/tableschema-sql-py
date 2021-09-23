@@ -35,7 +35,7 @@ templates:
 
 test:
 	pylama $(PACKAGE)
-	tox
+	py.test -vvv --cov tableschema_sql --cov-report term-missing || echo 'TESTING FAILED'
 
 version:
 	@echo $(VERSION)

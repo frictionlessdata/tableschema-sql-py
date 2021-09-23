@@ -24,24 +24,17 @@ jobs:
         image: postgres
         env:
           POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+        options: --health-cmd=pg_isready --health-interval=10s --health-timeout=5s --health-retries=5
         ports:
           - 5432:5432
       mysql:
-        image: mysql
+        image: mysql:8
         env:
           MYSQL_USER: test_user
           MYSQL_PASSWORD: test_password
+          MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: test_db
-        options: >-
-          --health-cmd "mysqladmin ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=10
         ports:
           - 3306:3306
     steps:

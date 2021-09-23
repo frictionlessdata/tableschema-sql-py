@@ -28,6 +28,7 @@ INSTALL_REQUIRES = [
     'tableschema>=1.0',
 ]
 TESTS_REQUIRE = [
+    'coverage',
     'mock',
     'pylama',
     'pytest',

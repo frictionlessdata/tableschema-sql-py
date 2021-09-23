@@ -12,8 +12,6 @@ on:
 
 jobs:
 
-  # Test
-
   test-linux:
     runs-on: ubuntu-latest
     strategy:
@@ -48,15 +46,12 @@ jobs:
         run: make install
       - name: Test software
         env:
-          TOXENV: "py${PYTHON_VERSION//./}"
           POSTGRES_URL: postgresql://postgres@localhost:5432/postgres
           SQLITE_URL: 'sqlite:///:memory:'
           MYSQL_URL: mysql+pymysql://test_user:test_password@localhost:3306/test_db?charset=utf8
         run: make test
       - name: Report coverage
         uses: codecov/codecov-action@v1
-
-  # Release
 
   release:
     if: github.event_name == 'push' && contains(github.ref, 'refs/tags/')

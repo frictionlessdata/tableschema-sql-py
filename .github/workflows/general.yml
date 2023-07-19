@@ -17,6 +17,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8, 3.9, "3.10"]
+        sqlalchemy-version: [1.4, 2.0]
     services:
       postgres:
         image: postgres
@@ -43,7 +44,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: make install
+        run: |
+          make install
+          pip install sqlalchemy==${{ matrix.sqlalchemy-version }}
       - name: Test software
         env:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/postgres

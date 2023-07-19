@@ -37,25 +37,25 @@ class Writer(object):
         """Write rows/keyed_rows to table
         """
         with self.__engine.connect() as connection:
-            for row in rows:
-                keyed_row = row
-                if not keyed:
-                    keyed_row = dict(zip(self.__schema.field_names, row))
-                keyed_row = self.__convert_row(keyed_row)
-                if self.__check_existing(keyed_row):
-                    for wr in self.__insert(connection):
-                        yield wr
-                    ret = self.__update(connection, keyed_row)
-                    if ret is not None:
-                        yield WrittenRow(keyed_row, True, ret if self.__autoincrement else None)
-                        continue
-                self.__buffer.append(keyed_row)
-                if len(self.__buffer) > self.__buffer_size:
-                    for wr in self.__insert(connection):
-                        yield wr
-            for wr in self.__insert(connection):
-                yield wr
-            connection.commit()
+            with connection.begin():
+                for row in rows:
+                    keyed_row = row
+                    if not keyed:
+                        keyed_row = dict(zip(self.__schema.field_names, row))
+                    keyed_row = self.__convert_row(keyed_row)
+                    if self.__check_existing(keyed_row):
+                        for wr in self.__insert(connection):
+                            yield wr
+                        ret = self.__update(connection, keyed_row)
+                        if ret is not None:
+                            yield WrittenRow(keyed_row, True, ret if self.__autoincrement else None)
+                            continue
+                    self.__buffer.append(keyed_row)
+                    if len(self.__buffer) > self.__buffer_size:
+                        for wr in self.__insert(connection):
+                            yield wr
+                for wr in self.__insert(connection):
+                    yield wr
 
     # Private
 

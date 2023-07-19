@@ -22,10 +22,11 @@ PACKAGE = 'tableschema_sql'
 NAME = PACKAGE.replace('_', '-')
 INSTALL_REQUIRES = [
     'six>=1.9',
-    'sqlalchemy>=1.0',
+    'sqlalchemy>=2.0,<3',
     'pybloom_live>=2.2',
     'tabulator>=1.1',
     'tableschema>=1.0',
+    'cryptography'
 ]
 TESTS_REQUIRE = [
     'coverage',

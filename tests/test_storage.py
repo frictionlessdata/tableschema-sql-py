@@ -12,7 +12,7 @@ import tableschema
 import sqlalchemy as sa
 from copy import deepcopy
 from tabulator import Stream
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine import reflection
 from tableschema_sql import Storage
 from dotenv import load_dotenv; load_dotenv('.env')
@@ -105,7 +105,7 @@ COMPOUND = {
     ('postgresql', os.environ['POSTGRES_URL']),
     ('sqlite', os.environ['SQLITE_URL']),
 ])
-def test_storage(dialect, database_url):
+def test_storage_flow(dialect, database_url):
 
     # Create storage
     engine = create_engine(database_url)
@@ -597,33 +597,33 @@ def test_storage_constraints(dialect, database_url):
 
     # Write invalid data (stringMinLength)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        pattern = "INSERT INTO %s VALUES('a', 'aaaaa', 5, 5, 'test', 'test')"
-        engine.execute(pattern % table_name)
+        pattern = text("INSERT INTO %s VALUES('a', 'aaaaa', 5, 5, 'test', 'test')" % table_name)
+        engine.connect().execute(pattern)
 
     # Write invalid data (stringMaxLength)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaaaaaa', 5, 5, 'test', 'test')"
-        engine.execute(pattern % table_name)
+        pattern = text("INSERT INTO %s VALUES('aaaaa', 'aaaaaaaaa', 5, 5, 'test', 'test')" % table_name)
+        engine.connect().execute(pattern)
 
     # Write invalid data (numberMinimum)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 1, 5, 'test', 'test')"
-        engine.execute(pattern % table_name)
+        pattern = text("INSERT INTO %s VALUES('aaaaa', 'aaaaa', 1, 5, 'test', 'test')" % table_name)
+        engine.connect().execute(pattern)
 
     # Write invalid data (numberMaximum)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 9, 'test', 'test')"
-        engine.execute(pattern % table_name)
+        pattern = text("INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 9, 'test', 'test')" % table_name)
+        engine.connect().execute(pattern)
 
     # Write invalid data (stringPattern)
     with pytest.raises(sa.exc.IntegrityError) as excinfo:
-        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 5, 'bad1', 'test')"
-        engine.execute(pattern % table_name)
+        pattern = text("INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 5, 'bad1', 'test')" % table_name)
+        engine.connect().execute(pattern)
 
     # Write invalid data (stringEnum)
     with pytest.raises((sa.exc.DataError, sa.exc.IntegrityError)) as excinfo:
-        pattern = "INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 5, 'test', 'bad')"
-        engine.execute(pattern % table_name)
+        pattern = text("INSERT INTO %s VALUES('aaaaa', 'aaaaa', 5, 5, 'test', 'bad')" % table_name)
+        engine.connect().execute(pattern)
 
 
 @pytest.mark.parametrize('dialect, database_url', [

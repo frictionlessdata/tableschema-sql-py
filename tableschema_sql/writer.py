@@ -16,11 +16,12 @@ class Writer(object):
 
     # Public
 
-    def __init__(self, table, schema, update_keys,
+    def __init__(self, engine, table, schema, update_keys,
                  autoincrement, convert_row, buffer_size,
                  use_bloom_filter):
         """Writer to insert/update rows into table
         """
+        self.__engine = engine
         self.__table = table
         self.__schema = schema
         self.__update_keys = update_keys
@@ -30,42 +31,45 @@ class Writer(object):
         self.__buffer_size = buffer_size
         self.__use_bloom_filter = use_bloom_filter
         if update_keys is not None and use_bloom_filter:
-            self.__prepare_bloom()
+            with self.__engine.connect() as connection:
+                self.__prepare_bloom(connection)
 
     def write(self, rows, keyed=False):
         """Write rows/keyed_rows to table
         """
-        for row in rows:
-            keyed_row = row
-            if not keyed:
-                keyed_row = dict(zip(self.__schema.field_names, row))
-            keyed_row = self.__convert_row(keyed_row)
-            if self.__check_existing(keyed_row):
-                for wr in self.__insert():
-                    yield wr
-                ret = self.__update(keyed_row)
-                if ret is not None:
-                    yield WrittenRow(keyed_row, True, ret if self.__autoincrement else None)
-                    continue
-            self.__buffer.append(keyed_row)
-            if len(self.__buffer) > self.__buffer_size:
-                for wr in self.__insert():
-                    yield wr
-        for wr in self.__insert():
-            yield wr
+        with self.__engine.connect() as connection:
+            for row in rows:
+                keyed_row = row
+                if not keyed:
+                    keyed_row = dict(zip(self.__schema.field_names, row))
+                keyed_row = self.__convert_row(keyed_row)
+                if self.__check_existing(keyed_row):
+                    for wr in self.__insert(connection):
+                        yield wr
+                    ret = self.__update(connection, keyed_row)
+                    if ret is not None:
+                        yield WrittenRow(keyed_row, True, ret if self.__autoincrement else None)
+                        continue
+                self.__buffer.append(keyed_row)
+                if len(self.__buffer) > self.__buffer_size:
+                    for wr in self.__insert(connection):
+                        yield wr
+            for wr in self.__insert(connection):
+                yield wr
+            connection.commit()
 
     # Private
 
-    def __prepare_bloom(self):
+    def __prepare_bloom(self, connection):
         """Prepare bloom for existing checks
         """
         self.__bloom = pybloom_live.ScalableBloomFilter()
         columns = [getattr(self.__table.c, key) for key in self.__update_keys]
-        keys = select(columns).execution_options(stream_results=True).execute()
+        keys = connection.execute(select(columns).execution_options(stream_results=True))
         for key in keys:
             self.__bloom.add(tuple(key))
 
-    def __insert(self):
+    def __insert(self, connection):
         """Insert rows to table
         """
         if len(self.__buffer) > 0:
@@ -75,12 +79,12 @@ class Writer(object):
                 statement = statement.returning(
                     getattr(self.__table.c, self.__autoincrement))
                 statement = statement.values(self.__buffer)
-                res = statement.execute()
+                res = connection.execute(statement)
                 for id, in res:
                     row = self.__buffer.pop(0)
                     yield WrittenRow(row, False, id)
             else:
-                statement.execute(self.__buffer)
+                connection.execute(statement, self.__buffer)
                 for row in self.__buffer:
                     yield WrittenRow(row, False, None)
             # Clean memory

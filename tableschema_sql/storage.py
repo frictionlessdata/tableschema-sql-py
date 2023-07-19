@@ -50,7 +50,7 @@ class Storage(tableschema.Storage):
     def __init__(self, engine, dbschema=None, prefix='', reflect_only=None, autoincrement=None):
 
         # Set attributes
-        self.__connection = engine.connect()
+        self.__engine = engine
         self.__dbschema = dbschema
         self.__prefix = prefix
         self.__descriptors = {}
@@ -65,7 +65,8 @@ class Storage(tableschema.Storage):
                 reg = re.compile(expr)
                 return reg.search(item) is not None
             # It will fail silently if this function already exists
-            self.__connection.connection.create_function('REGEXP', 2, regexp)
+            with self.__engine.connect() as __connection:
+                __connection.connection.create_function('REGEXP', 2, regexp)
 
         # Create mapper
         self.__mapper = Mapper(prefix=prefix, dialect=self.__dialect)
@@ -79,7 +80,7 @@ class Storage(tableschema.Storage):
         # Template and format
         template = 'Storage <{engine}/{dbschema}>'
         text = template.format(
-            engine=self.__connection.engine,
+            engine=self.__engine,
             dbschema=self.__dbschema)
 
         return text
@@ -140,7 +141,7 @@ class Storage(tableschema.Storage):
 
         # Create tables, update metadata
         try:
-            self.__metadata.create_all(bind=self.__connection)
+            self.__metadata.create_all(bind=self.__engine)
         except sqlalchemy.exc.ProgrammingError as exception:
             if 'there is no unique constraint matching given keys' in str(exception):
                 message = 'Foreign keys can only reference primary key or unique fields\n%s'
@@ -177,7 +178,7 @@ class Storage(tableschema.Storage):
             tables.append(table)
 
         # Drop tables, update metadata
-        self.__metadata.drop_all(tables=tables, bind=self.__connection)
+        self.__metadata.drop_all(tables=tables, bind=self.__engine)
         self.__metadata.clear()
         self.__reflect()
 
@@ -205,12 +206,11 @@ class Storage(tableschema.Storage):
         schema = tableschema.Schema(self.describe(bucket))
         autoincrement = self.__get_autoincrement_for_bucket(bucket)
 
-        # Open and close transaction
-        with self.__connection.begin():
-            # Streaming could be not working for some backends:
-            # http://docs.sqlalchemy.org/en/latest/core/connections.html
-            select = table.select().execution_options(stream_results=True)
-            result = select.execute()
+        # Streaming could be not working for some backends:
+        # http://docs.sqlalchemy.org/en/latest/core/connections.html
+        select = table.select().execution_options(stream_results=True)
+        with self.__engine.connect() as connection:
+            result = connection.execute(select)
             for row in result:
                 row = self.__mapper.restore_row(
                     row, schema=schema, autoincrement=autoincrement)
@@ -252,18 +252,17 @@ class Storage(tableschema.Storage):
         # Write rows to table
         convert_row = partial(self.__mapper.convert_row, schema=schema, fallbacks=fallbacks)
         autoincrement = self.__get_autoincrement_for_bucket(bucket)
-        writer = Writer(table, schema,
+        writer = Writer(self.__engine, table, schema,
             # Only PostgreSQL supports "returning" so we don't use autoincrement for all
             autoincrement=autoincrement if self.__dialect in ['postgresql'] else None,
             update_keys=update_keys,
             convert_row=convert_row,
             buffer_size=buffer_size,
             use_bloom_filter=use_bloom_filter)
-        with self.__connection.begin():
-            gen = writer.write(rows, keyed=keyed)
-            if as_generator:
-                return gen
-            collections.deque(gen, maxlen=0)
+        gen = writer.write(rows, keyed=keyed)
+        if as_generator:
+            return gen
+        collections.deque(gen, maxlen=0)
 
     # Private
 
@@ -276,7 +275,7 @@ class Storage(tableschema.Storage):
     def __reflect(self):
         def only(name, _):
             return self.__only(name) and self.__mapper.restore_bucket(name) is not None
-        self.__metadata.reflect(only=only, bind=self.__connection)
+        self.__metadata.reflect(only=only, bind=self.__engine)
 
     def __get_autoincrement_for_bucket(self, bucket):
         if isinstance(self.__autoincrement, dict):

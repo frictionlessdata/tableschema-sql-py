@@ -68,10 +68,10 @@ class Storage(tableschema.Storage):
             self.__connection.connection.create_function('REGEXP', 2, regexp)
 
         # Create mapper
-        self.__mapper = Mapper(prefix=prefix, dialect=self.__dialect)
+        self.__mapper = Mapper(prefix=prefix, dialect=self.__dialect, geo=self.__geo)
 
         # Create metadata and reflect
-        self.__metadata = MetaData(bind=self.__connection, schema=self.__dbschema)
+        self.__metadata = MetaData(schema=self.__dbschema)
         self.__reflect()
 
     def __repr__(self):
@@ -140,7 +140,7 @@ class Storage(tableschema.Storage):
 
         # Create tables, update metadata
         try:
-            self.__metadata.create_all()
+            self.__metadata.create_all(bind=self.__connection)
         except sqlalchemy.exc.ProgrammingError as exception:
             if 'there is no unique constraint matching given keys' in str(exception):
                 message = 'Foreign keys can only reference primary key or unique fields\n%s'
@@ -177,7 +177,7 @@ class Storage(tableschema.Storage):
             tables.append(table)
 
         # Drop tables, update metadata
-        self.__metadata.drop_all(tables=tables)
+        self.__metadata.drop_all(tables=tables, bind=self.__connection)
         self.__metadata.clear()
         self.__reflect()
 
@@ -276,7 +276,7 @@ class Storage(tableschema.Storage):
     def __reflect(self):
         def only(name, _):
             return self.__only(name) and self.__mapper.restore_bucket(name) is not None
-        self.__metadata.reflect(only=only)
+        self.__metadata.reflect(only=only, bind=self.__connection)
 
     def __get_autoincrement_for_bucket(self, bucket):
         if isinstance(self.__autoincrement, dict):

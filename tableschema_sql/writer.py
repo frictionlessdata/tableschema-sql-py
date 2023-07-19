@@ -5,7 +5,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import pybloom_live
-from sqlalchemy import select
 from collections import namedtuple
 WrittenRow = namedtuple('WrittenRow', ['row', 'updated', 'updated_id'])
 

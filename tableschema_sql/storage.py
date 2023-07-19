@@ -68,7 +68,7 @@ class Storage(tableschema.Storage):
             self.__connection.connection.create_function('REGEXP', 2, regexp)
 
         # Create mapper
-        self.__mapper = Mapper(prefix=prefix, dialect=self.__dialect, geo=self.__geo)
+        self.__mapper = Mapper(prefix=prefix, dialect=self.__dialect)
 
         # Create metadata and reflect
         self.__metadata = MetaData(schema=self.__dbschema)

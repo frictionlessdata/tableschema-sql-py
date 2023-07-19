@@ -105,7 +105,7 @@ COMPOUND = {
     ('postgresql', os.environ['POSTGRES_URL']),
     ('sqlite', os.environ['SQLITE_URL']),
 ])
-def test_storage(dialect, database_url):
+def test_storage_flow(dialect, database_url):
 
     # Create storage
     engine = create_engine(database_url)

@@ -74,7 +74,11 @@ class Mapper(object):
                     else:
                         checks.append(Check('"%s" REGEXP \'%s\'' % (field.name, value)))
                 elif name == 'enum':
-                    column_type = sa.Enum(*value, name='%s_%s_enum' % (table_name, field.name))
+                    if self.__dialect in ['sqlite']:
+                        checks.append(Check(sa.text('"%s" in (:values)' % field.name)
+                                              .bindparams(sa.bindparam(key="values", value=value, expanding=True))))
+                    else:
+                        column_type = sa.Enum(*value, name='%s_%s_enum' % (table_name, field.name))
             column = sa.Column(*([field.name, column_type] + checks),
                 nullable=nullable, comment=comment, unique=unique)
             columns.append(column)

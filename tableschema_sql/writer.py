@@ -65,7 +65,7 @@ class Writer(object):
         """
         self.__bloom = pybloom_live.ScalableBloomFilter()
         columns = [getattr(self.__table.c, key) for key in self.__update_keys]
-        keys = connection.execute(select(columns).execution_options(stream_results=True))
+        keys = connection.execute(self.__table.select().with_only_columns(*columns).execution_options(stream_results=True))
         for key in keys:
             self.__bloom.add(tuple(key))
 
@@ -90,7 +90,7 @@ class Writer(object):
             # Clean memory
             self.__buffer = []
 
-    def __update(self, row):
+    def __update(self, connection, row):
         """Update rows in table
         """
         expr = self.__table.update().values(row)
@@ -98,7 +98,7 @@ class Writer(object):
             expr = expr.where(getattr(self.__table.c, key) == row[key])
         if self.__autoincrement:
             expr = expr.returning(getattr(self.__table.c, self.__autoincrement))
-        res = expr.execute()
+        res = connection.execute(expr)
         if res.rowcount > 0:
             if self.__autoincrement:
                 first = next(iter(res))

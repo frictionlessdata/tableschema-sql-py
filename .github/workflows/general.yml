@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies
         run: |
           make install
-          pip install sqlalchemy==${{ matrix.sqlalchemy-version }}
+          pip install "sqlalchemy>=${{ matrix.sqlalchemy-version }}"
       - name: Test software
         env:
           POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/postgres

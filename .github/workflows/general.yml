@@ -46,7 +46,7 @@ jobs:
         run: make install
       - name: Test software
         env:
-          POSTGRES_URL: postgresql://postgres@localhost:5432/postgres
+          POSTGRES_URL: postgresql://postgres:postgres@localhost:5432/postgres
           SQLITE_URL: 'sqlite:///:memory:'
           MYSQL_URL: mysql+pymysql://test_user:test_password@localhost:3306/test_db?charset=utf8
         run: make test
